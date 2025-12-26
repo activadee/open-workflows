@@ -1,42 +1,49 @@
 {
-  "name": "open-workflows",
-  "version": "1.0.0",
-  "description": "AI-powered GitHub automation CLI - PR reviews, issue labeling, and doc sync",
-  "keywords": ["github", "opencode", "ai", "code-review", "automation", "cli"],
-  "author": "activadee14",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/activadee/open-workflows"
-  },
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "bin": {
-    "open-workflows": "./dist/bin/cli.js"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
-  },
-  "dependencies": {
-    "@opencode-ai/sdk": "^1.0.0",
-    "commander": "^14.0.2",
-    "picocolors": "^1.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "^25.0.3",
-    "tsup": "^8.3.0",
-    "typescript": "^5.6.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  }
+    "name": "@activadee-ai/open-workflows",
+    "version": "1.0.0",
+    "description": "AI-powered GitHub automation CLI - PR reviews, issue labeling, and doc sync",
+    "keywords": [
+        "github",
+        "opencode",
+        "ai",
+        "code-review",
+        "automation",
+        "cli"
+    ],
+    "author": "activadee",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/activadee/open-workflows"
+    },
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "bin": {
+        "open-workflows": "./dist/bin/cli.js"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "typecheck": "tsc --noEmit",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@opencode-ai/sdk": "^1.0.0",
+        "commander": "^14.0.2",
+        "picocolors": "^1.1.0"
+    },
+    "devDependencies": {
+        "@types/node": "^25.0.3",
+        "tsup": "^8.3.0",
+        "typescript": "^5.6.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
 }
