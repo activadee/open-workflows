@@ -1,135 +1,142 @@
-import { spawn, execSync, type ChildProcess } from 'child_process';
-import { createOpencodeClient, type OpencodeClient } from '@opencode-ai/sdk';
+import { createOpencode } from '@opencode-ai/sdk';
+import type { Part, EventMessageUpdated, Message } from '@opencode-ai/sdk';
 import type { OpenCodeOptions } from '../types.js';
 import { log } from './logger.js';
 
-let serverProcess: ChildProcess | null = null;
-const OPENCODE_PORT = 54321;
-const OPENCODE_URL = `http://127.0.0.1:${OPENCODE_PORT}`;
+let opencodeInstance: Awaited<ReturnType<typeof createOpencode>> | null = null;
 
 export async function ensureOpenCode(): Promise<void> {
-  // Check if opencode CLI is installed
-  try {
-    execSync('opencode --version', { stdio: 'ignore' });
-    log.success('OpenCode CLI found');
-  } catch {
-    log.step('Installing OpenCode CLI...');
-    execSync('curl -fsSL https://opencode.ai/install | bash', {
-      stdio: 'inherit',
-      shell: '/bin/bash',
-    });
-    log.success('OpenCode CLI installed');
-  }
-}
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  log.dim('Initializing OpenCode SDK...');
 }
 
 export async function startServer(): Promise<void> {
-  // Check if server is already running
-  try {
-    const response = await fetch(`${OPENCODE_URL}/health`);
-    if (response.ok) {
-      log.dim('OpenCode server already running');
-      return;
-    }
-  } catch {
-    // Server not running, start it
+  if (opencodeInstance) {
+    log.dim('OpenCode already running');
+    return;
   }
 
   log.step('Starting OpenCode server...');
 
-  serverProcess = spawn('opencode', ['serve', `--port=${OPENCODE_PORT}`], {
-    stdio: 'pipe',
-    detached: false,
+  opencodeInstance = await createOpencode({
+    hostname: '127.0.0.1',
+    port: 4199,
+    config: {
+      model: 'minimax/MiniMax-M2.1',
+    },
   });
 
-  serverProcess.on('error', (err) => {
-    log.error(`Server error: ${err.message}`);
-  });
-
-  // Wait for server to be ready
-  const maxAttempts = 30;
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      const response = await fetch(`${OPENCODE_URL}/health`);
-      if (response.ok) {
-        log.success('OpenCode server started');
-        return;
-      }
-    } catch {
-      await sleep(500);
-    }
-  }
-
-  throw new Error('Failed to start OpenCode server');
+  log.success('OpenCode server started');
 }
 
 export async function stopServer(): Promise<void> {
-  if (serverProcess) {
-    serverProcess.kill();
-    serverProcess = null;
+  if (opencodeInstance) {
+    opencodeInstance.server.close();
+    opencodeInstance = null;
   }
+}
+
+function parseModel(model: string): { providerID: string; modelID: string } {
+  const [providerID, ...rest] = model.split('/');
+  const modelID = rest.join('/');
+
+  if (!providerID?.length || !modelID.length) {
+    throw new Error(`Invalid model format: ${model}. Expected "provider/model".`);
+  }
+
+  return { providerID, modelID };
+}
+
+function extractTextFromParts(parts: Part[]): string {
+  return parts
+    .filter((part): part is Part & { text: string } => 
+      (part.type === 'text' || part.type === 'reasoning') && 'text' in part)
+    .map(part => part.text)
+    .join('');
 }
 
 export async function runOpenCode(options: OpenCodeOptions): Promise<string> {
-  const client: OpencodeClient = createOpencodeClient({ baseUrl: OPENCODE_URL });
+  if (!opencodeInstance) {
+    throw new Error('OpenCode not initialized. Call startServer() first.');
+  }
 
-  // Create session
-  const createResult = await client.session.create();
+  log.step('Running AI analysis...');
+
+  const createResult = await opencodeInstance.client.session.create();
   if (createResult.error || !createResult.data) {
     throw new Error('Failed to create session');
   }
-  const sessionId = createResult.data.id;
-  log.dim(`Session created: ${sessionId}`);
+  const session = createResult.data;
+
+  const { providerID, modelID } = parseModel(options.model);
+
+  const events = await opencodeInstance.client.event.subscribe();
+  const completedAssistantMessages = new Set<string>();
+  let isComplete = false;
+
+  const eventProcessor = (async () => {
+    for await (const event of events.stream) {
+      const evt = event as EventMessageUpdated | { type: string };
+
+      if (evt.type === 'message.updated' && 'properties' in evt) {
+        const info = evt.properties.info;
+        if (!info || info.sessionID !== session.id) continue;
+        if (info.role !== 'assistant') continue;
+
+        const assistantInfo = info as Message & { time?: { completed?: number } };
+        if (assistantInfo.time?.completed && !completedAssistantMessages.has(info.id)) {
+          completedAssistantMessages.add(info.id);
+
+          const messageResult = await opencodeInstance!.client.session.message({
+            path: { id: session.id, messageID: info.id },
+          });
+
+          if (!messageResult.error && messageResult.data) {
+            const { info: msgInfo, parts } = messageResult.data;
+            if (options.onMessage) {
+              options.onMessage({ info: msgInfo, parts });
+            }
+          }
+        }
+      }
+
+      if (isComplete) break;
+    }
+  })();
 
   try {
-    // Parse model string (provider/model)
-    const [providerID, ...modelParts] = options.model.split('/');
-    const modelID = modelParts.join('/');
-
-    // Send message
-    log.step('Running AI analysis...');
-    
-    await client.session.prompt({
-      path: { id: sessionId },
+    const promptResult = await opencodeInstance.client.session.prompt({
+      path: { id: session.id },
       body: {
         model: { providerID, modelID },
-        parts: [{ type: 'text', text: options.prompt }],
+        parts: [{ type: 'text' as const, text: options.prompt }],
       },
     });
 
-    // Collect output from events
-    let output = '';
-    const eventResult = await client.global.event();
-    const eventStream = eventResult.stream;
+    if (promptResult.error) {
+      throw new Error(`Prompt failed: ${JSON.stringify(promptResult.error)}`);
+    }
 
-    for await (const event of eventStream) {
-      if (options.onEvent) {
-        options.onEvent(event);
-      }
+    isComplete = true;
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Collect text output
-      const eventObj = event as Record<string, unknown>;
-      if (eventObj.type === 'message.part.text') {
-        output += eventObj.content as string;
-      }
-
-      // Handle completion
-      if (eventObj.type === 'session.complete' || eventObj.type === 'session.error') {
-        break;
+    if (options.onMessage && promptResult.data) {
+      const { info, parts } = promptResult.data as { info: Message; parts: Part[] };
+      if (info.role === 'assistant' && !completedAssistantMessages.has(info.id)) {
+        options.onMessage({ info, parts });
       }
     }
 
-    return output;
+    const response = promptResult.data as { parts?: Part[] } | undefined;
+    if (response?.parts) {
+      return extractTextFromParts(response.parts);
+    }
+    
+    return '';
   } finally {
-    // Clean up session
-    await client.session.delete({ path: { id: sessionId } }).catch(() => {});
+    await opencodeInstance.client.session.delete({ path: { id: session.id } });
   }
 }
 
-// Cleanup on process exit
 process.on('exit', () => stopServer());
 process.on('SIGINT', () => {
   stopServer();

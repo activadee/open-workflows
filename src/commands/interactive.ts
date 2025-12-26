@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { getContext } from '../lib/context.js';
 import { ensureOpenCode, startServer, runOpenCode, stopServer } from '../lib/opencode.js';
-import { log, banner } from '../lib/logger.js';
+import { log, banner, formatMessage } from '../lib/logger.js';
 
 interface InteractiveOptions {
   model?: string;
@@ -66,9 +66,7 @@ Respond helpfully and take any requested actions using the gh CLI.
           write: true,
           edit: true,
         },
-        onEvent: options.verbose
-          ? (event) => log.dim(JSON.stringify(event))
-          : undefined,
+        onMessage: formatMessage,
       });
 
       log.success('Interactive command handled!');

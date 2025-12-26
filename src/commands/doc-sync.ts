@@ -3,7 +3,7 @@ import { getContext, requireRepo } from '../lib/context.js';
 import { getPRDetails, getLocalDiff, ensureGhCli, ensureGhAuth } from '../lib/github.js';
 import { ensureOpenCode, startServer, runOpenCode, stopServer } from '../lib/opencode.js';
 import { loadPrompt } from '../lib/prompts.js';
-import { log, banner } from '../lib/logger.js';
+import { log, banner, formatMessage } from '../lib/logger.js';
 import type { CommandOptions } from '../types.js';
 
 export const docSyncCommand = new Command('doc-sync')
@@ -70,9 +70,7 @@ ${diff}
         model: options.model || 'minimax/MiniMax-M2.1',
         prompt,
         permissions,
-        onEvent: options.verbose
-          ? (event) => log.dim(JSON.stringify(event))
-          : undefined,
+        onMessage: formatMessage,
       });
 
       if (options.dryRun) {

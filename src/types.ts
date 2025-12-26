@@ -20,6 +20,28 @@ export interface CommandOptions {
   verbose?: boolean;
 }
 
+import type { Part, Message } from '@opencode-ai/sdk';
+
+export type {
+  Message,
+  UserMessage,
+  AssistantMessage,
+  TextPart,
+  ReasoningPart,
+  ToolPart,
+  ToolState,
+  ToolStatePending,
+  ToolStateRunning,
+  ToolStateCompleted,
+  ToolStateError,
+  FilePart,
+  StepStartPart,
+  StepFinishPart,
+  Part,
+  EventMessageUpdated,
+  EventMessagePartUpdated,
+} from '@opencode-ai/sdk';
+
 export interface OpenCodeOptions {
   model: string;
   prompt: string;
@@ -28,7 +50,7 @@ export interface OpenCodeOptions {
     write?: boolean;
     edit?: boolean;
   };
-  onEvent?: (event: unknown) => void;
+  onMessage?: (message: { info: Message; parts: Part[] }) => void;
 }
 
 export interface PRDetails {
