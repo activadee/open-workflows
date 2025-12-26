@@ -20,7 +20,7 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "bin": {
-        "open-workflows": "./dist/bin/cli.js"
+        "@activadee-ai/open-workflows": "./dist/bin/cli.js"
     },
     "files": [
         "dist",

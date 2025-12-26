@@ -1,6 +1,6 @@
 # Example GitHub Actions Workflows
 
-These are minimal examples showing how to use the `open-workflows` CLI in your repository.
+These are minimal examples showing how to use the `@activadee-ai/open-workflows` CLI in your repository.
 
 ## PR Review
 
@@ -21,7 +21,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx open-workflows review
+      - run: npx @activadee-ai/open-workflows review
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
@@ -45,7 +45,7 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx open-workflows label
+      - run: npx @activadee-ai/open-workflows label
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
@@ -74,7 +74,7 @@ jobs:
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - run: npx open-workflows doc-sync
+      - run: npx @activadee-ai/open-workflows doc-sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
@@ -103,7 +103,7 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx open-workflows interactive
+      - run: npx @activadee-ai/open-workflows interactive
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}

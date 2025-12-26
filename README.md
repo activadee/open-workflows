@@ -8,10 +8,10 @@ Powered by [OpenCode](https://opencode.ai).
 
 ```bash
 # Use directly with npx (recommended)
-npx open-workflows <command>
+npx @activadee-ai/open-workflows <command>
 
 # Or install globally
-npm install -g open-workflows
+npm install -g @activadee-ai/open-workflows
 ```
 
 ## Commands
@@ -20,42 +20,42 @@ npm install -g open-workflows
 
 ```bash
 # In GitHub Actions (auto-detects PR)
-npx open-workflows review
+npx @activadee-ai/open-workflows review
 
 # Review specific PR
-npx open-workflows review --pr 123 --repo owner/repo
+npx @activadee-ai/open-workflows review --pr 123 --repo owner/repo
 
 # Review local changes
-npx open-workflows review --local
+npx @activadee-ai/open-workflows review --local
 
 # Preview without posting
-npx open-workflows review --dry-run
+npx @activadee-ai/open-workflows review --dry-run
 ```
 
 ### Label an Issue
 
 ```bash
 # In GitHub Actions (auto-detects issue)
-npx open-workflows label
+npx @activadee-ai/open-workflows label
 
 # Label specific issue
-npx open-workflows label --issue 456 --repo owner/repo
+npx @activadee-ai/open-workflows label --issue 456 --repo owner/repo
 
 # Preview without applying
-npx open-workflows label --dry-run
+npx @activadee-ai/open-workflows label --dry-run
 ```
 
 ### Sync Documentation
 
 ```bash
 # In GitHub Actions
-npx open-workflows doc-sync
+npx @activadee-ai/open-workflows doc-sync
 
 # For local changes
-npx open-workflows doc-sync --local
+npx @activadee-ai/open-workflows doc-sync --local
 
 # Preview without committing
-npx open-workflows doc-sync --dry-run
+npx @activadee-ai/open-workflows doc-sync --dry-run
 ```
 
 ### Interactive Mode
@@ -64,7 +64,7 @@ Handles `/oc` and `/opencode` slash commands from GitHub comments.
 
 ```bash
 # Only works in GitHub Actions
-npx open-workflows interactive
+npx @activadee-ai/open-workflows interactive
 ```
 
 ## GitHub Actions Usage
@@ -86,7 +86,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx open-workflows review
+      - run: npx @activadee-ai/open-workflows review
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
@@ -108,7 +108,7 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx open-workflows label
+      - run: npx @activadee-ai/open-workflows label
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
@@ -130,7 +130,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx open-workflows doc-sync
+      - run: npx @activadee-ai/open-workflows doc-sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
@@ -157,7 +157,7 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx open-workflows interactive
+      - run: npx @activadee-ai/open-workflows interactive
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
@@ -194,10 +194,10 @@ The CLI works locally too! You need:
 export MINIMAX_API_KEY=your-key-here
 
 # Review a PR from your terminal
-npx open-workflows review --pr 123 --repo owner/repo
+npx @activadee-ai/open-workflows review --pr 123 --repo owner/repo
 
 # Review local uncommitted changes
-npx open-workflows review --local
+npx @activadee-ai/open-workflows review --local
 ```
 
 ## Requirements
