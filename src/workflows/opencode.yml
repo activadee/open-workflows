@@ -16,7 +16,7 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
-      - run:  npx -y @activadee-ai/open-workflows interactive
+      - run: npx -y @activadee-ai/open-workflows@latest interactive
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
