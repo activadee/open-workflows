@@ -21,21 +21,21 @@ export const configureAgents: NonNullable<Hooks['config']> = async (cfg) => {
     ...cfg.agent,
     review: {
       description: 'AI-powered pull request code review',
-      mode: 'subagent' as const,
+      mode: 'primary',
       model: DEFAULT_MODEL,
       prompt: REVIEW_PROMPT,
       tools: BASE_TOOLS,
     },
     label: {
       description: 'Automatically label GitHub issues',
-      mode: 'subagent' as const,
+      mode: 'primary',
       model: DEFAULT_MODEL,
       prompt: LABEL_PROMPT,
       tools: BASE_TOOLS,
     },
     'doc-sync': {
       description: 'Sync documentation with code changes',
-      mode: 'subagent' as const,
+      mode: 'primary',
       model: DEFAULT_MODEL,
       prompt: DOC_SYNC_PROMPT,
       tools: {
