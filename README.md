@@ -16,6 +16,27 @@ npm install -g @activadee-ai/open-workflows
 
 ## Commands
 
+### Initialize Workflows
+
+Set up GitHub Actions workflows in your repository:
+
+```bash
+# Interactive mode (recommended)
+npx @activadee-ai/open-workflows init
+
+# Select specific workflows
+npx @activadee-ai/open-workflows init --select doc-sync --select label
+
+# Skip specific workflows
+npx @activadee-ai/open-workflows init --skip release
+
+# Install all workflows
+npx @activadee-ai/open-workflows init --all
+
+# Preview without making changes
+npx @activadee-ai/open-workflows init --dry-run
+```
+
 ### Review a PR
 
 ```bash
@@ -65,6 +86,18 @@ Handles `/oc` and `/opencode` slash commands from GitHub comments.
 ```bash
 # Only works in GitHub Actions
 npx @activadee-ai/open-workflows interactive
+```
+
+### Manage Releases
+
+Analyzes commits and automatically bumps versions when worth releasing.
+
+```bash
+# In GitHub Actions (triggers on release created)
+npx @activadee-ai/open-workflows release
+
+# Dry run to see what version bump would be
+npx @activadee-ai/open-workflows release --dry-run
 ```
 
 ## GitHub Actions Usage
@@ -163,6 +196,28 @@ jobs:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
 ```
 
+### Release
+
+```yaml
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx @activadee-ai/open-workflows release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+```
+
 ## Options
 
 | Option | Description |
@@ -174,6 +229,9 @@ jobs:
 | `--local` | Use local git changes |
 | `--dry-run` | Preview without posting/committing |
 | `--verbose` | Detailed output |
+| `--select <workflow>` | Select workflow for init (can be used multiple times) |
+| `--skip <workflow>` | Skip workflow for init (can be used multiple times) |
+| `--all` | Select all workflows for init |
 
 ## Environment Variables
 

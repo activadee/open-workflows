@@ -67,10 +67,11 @@ jobs:
       model: opencode/big-pickle
 ```
 
-## Prompt
+## How It Works
 
-The labeling prompt is located at [`prompts/label.md`](../../prompts/label.md) and instructs OpenCode to:
-- Read the issue carefully
-- Apply up to 3 relevant labels
-- Prefer existing labels over creating new ones
-- Follow naming conventions
+The label workflow uses OpenCode to analyze issues and apply appropriate labels. When an issue is opened or edited:
+
+1. OpenCode reads the issue title and body
+2. Analyzes the content to understand the issue type
+3. Applies up to 3 relevant labels from existing repository labels
+4. Creates new labels only if no existing label fits

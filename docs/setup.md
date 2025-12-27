@@ -30,7 +30,25 @@ The GitHub App enables OpenCode to interact with issues, pull requests, and comm
 
 Create the workflow files you need in your repository's `.github/workflows/` directory.
 
-### Option A: All-in-One Setup
+### Option A: Quick Setup (Recommended)
+
+Use the `init` command to automatically create workflow files:
+
+```bash
+# Interactive mode
+npx @activadee-ai/open-workflows init
+
+# Select specific workflows
+npx @activadee-ai/open-workflows init --select doc-sync --select label --select review
+
+# Install all workflows
+npx @activadee-ai/open-workflows init --all
+
+# Preview without making changes
+npx @activadee-ai/open-workflows init --dry-run
+```
+
+### Option B: All-in-One Setup
 
 Create a single file that imports all workflows:
 
@@ -70,7 +88,7 @@ jobs:
     secrets: inherit
 ```
 
-### Option B: Individual Workflow Files
+### Option C: Individual Workflow Files
 
 Create separate files for each workflow (recommended for more control):
 
@@ -134,3 +152,4 @@ jobs:
 - [Review Workflow Documentation](workflows/review.md)
 - [Label Workflow Documentation](workflows/label.md)
 - [Doc Sync Workflow Documentation](workflows/doc-sync.md)
+- [Release Workflow Documentation](workflows/release.md)
