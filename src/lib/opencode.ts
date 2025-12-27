@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { createOpencode } from '@opencode-ai/sdk';
 import type { Part, EventMessageUpdated, Message } from '@opencode-ai/sdk';
 import type { OpenCodeOptions } from '../types.js';
@@ -7,6 +8,22 @@ let opencodeInstance: Awaited<ReturnType<typeof createOpencode>> | null = null;
 
 export async function ensureOpenCode(): Promise<void> {
   log.dim('Initializing OpenCode SDK...');
+
+  try {
+    execSync('opencode --version', { stdio: 'ignore' });
+    return;
+  } catch {
+    log.warn('OpenCode CLI not found. Installing @opencode-ai/cli globally...');
+
+    try {
+      execSync('npm install -g @opencode-ai/cli', { stdio: 'inherit' });
+      log.success('Installed @opencode-ai/cli globally.');
+    } catch (error) {
+      throw new Error(
+        'Failed to install @opencode-ai/cli globally. Please install it manually with "npm install -g @opencode-ai/cli".'
+      );
+    }
+  }
 }
 
 export async function startServer(): Promise<void> {
