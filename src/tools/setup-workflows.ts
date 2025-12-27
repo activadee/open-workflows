@@ -45,7 +45,7 @@ export const setupWorkflowsTool: ToolDefinition = tool({
 
     results.push('');
     results.push('Next steps:');
-    results.push('1. Add ANTHROPIC_API_KEY secret: gh secret set ANTHROPIC_API_KEY');
+    results.push('1. Add MINIMAX_API_KEY secret: gh secret set MINIMAX_API_KEY');
     results.push('2. Commit and push the workflow files');
 
     return results.join('\n');

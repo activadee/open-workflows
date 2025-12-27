@@ -31,7 +31,7 @@ Optional: override the model per-agent in `opencode.json`.
 Add your API key as a GitHub Actions secret:
 
 ```bash
-gh secret set ANTHROPIC_API_KEY -b"your-key"
+gh secret set MINIMAX_API_KEY -b"your-key"
 ```
 
 ## 4) Install workflow files
@@ -55,4 +55,4 @@ If you prefer manual setup, copy the examples from `examples/README.md` into you
 - Open a PR → the PR review workflow should run
 - Open or edit an issue → the issue labeling workflow should run
 
-If something fails, check the Actions logs and confirm the `ANTHROPIC_API_KEY` secret is set.
+If something fails, check the Actions logs and confirm the `MINIMAX_API_KEY` secret is set.

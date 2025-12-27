@@ -15,7 +15,7 @@ These are minimal examples showing how to use the `@activadee-ai/open-workflows`
 1. Add your model provider key (default: Anthropic) as a GitHub Actions secret:
 
 ```bash
-gh secret set ANTHROPIC_API_KEY -b"your-key"
+gh secret set MINIMAX_API_KEY -b"your-key"
 ```
 
 ## PR Review

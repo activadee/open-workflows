@@ -53,7 +53,7 @@ OpenCode will use the `setup_workflows` tool to create the GitHub Action files.
 After setting up workflows, add your API key as a repository secret:
 
 ```bash
-gh secret set ANTHROPIC_API_KEY -b"your-key"
+gh secret set MINIMAX_API_KEY -b"your-key"
 ```
 
 Then commit and push the workflow files.
