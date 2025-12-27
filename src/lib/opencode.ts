@@ -13,14 +13,14 @@ export async function ensureOpenCode(): Promise<void> {
     execSync('opencode --version', { stdio: 'ignore' });
     return;
   } catch {
-    log.warn('OpenCode CLI not found. Installing @opencode-ai/cli globally...');
+    log.warn('OpenCode CLI not found. Installing opencode-ai globally...');
 
     try {
-      execSync('npm install -g @opencode-ai/cli', { stdio: 'inherit' });
-      log.success('Installed @opencode-ai/cli globally.');
+      execSync('npm install -g opencode-ai', { stdio: 'inherit' });
+      log.success('Installed opencode-ai globally.');
     } catch (error) {
       throw new Error(
-        'Failed to install @opencode-ai/cli globally. Please install it manually with "npm install -g @opencode-ai/cli".'
+        'Failed to install opencode-ai globally. Please install it manually with "npm install -g opencode-ai".'
       );
     }
   }
