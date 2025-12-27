@@ -1,6 +1,6 @@
 export const release = `# Automated Version Bump
 
-You are responsible for deciding whether a new npm version should be released and, if so, bumping the version and pushing the corresponding git tag.
+You are responsible for deciding whether a new version should be released and, if so, bumping the version and pushing the corresponding git tag.
 
 ## Context
 
@@ -21,7 +21,7 @@ Between \`$FROM_TAG\` and \`$TO_TAG\`:
 
 No noteworthy changes in this release.
 
-3. If there are worthwhile changes, decide the appropriate semantic version bump (\`patch\`, \`minor\`, or \`major\`), run \`npm version\` to bump \`package.json\`, and push the resulting commit and tag to the remote.
+3. If there are worthwhile changes, decide the appropriate semantic version bump (\`patch\`, \`minor\`, or \`major\`), run \`bun version\` to bump \`package.json\`, and push the resulting commit and tag to the remote.
 
 This command does **not** create GitHub Releases. Those are handled separately (for example, with \`gh release create --generate-notes\`). Your job is only to manage the version and tag.
 
@@ -88,8 +88,8 @@ You must obey the \`$DRY_RUN\` flag **strictly**.
 
 - You may use **only read-only operations**:
   - \`gh api\` to inspect commits.
-- You **must not** run commands that change git or npm state:
-  - Do **not** run \`npm version\`.
+- You **must not** run commands that change git or version state:
+  - Do **not** run \`bun version\`.
   - Do **not** run \`git commit\`, \`git tag\`, or \`git push\`.
   - Do **not** run \`gh release\` commands.
 - If there are **no** worthwhile changes:
@@ -110,7 +110,7 @@ You must obey the \`$DRY_RUN\` flag **strictly**.
 
 If there are no worthwhile changes:
 
-- Do not run \`npm version\`.
+- Do not run \`bun version\`.
 - Do not push anything.
 - Do not create tags.
 - Output exactly:
@@ -120,7 +120,7 @@ No noteworthy changes in this release.
 If there **are** worthwhile changes:
 
 1. Decide the bump type (\`patch\`, \`minor\`, or \`major\`).
-2. Run \`npm version <type> -m "chore(release): %s [skip ci]"\` (without \`--no-git-tag-version\`). This will:
+2. Run \`bun version <type> -m "chore(release): %s [skip ci]"\` (without \`--no-git-tag-version\`). This will:
    - Bump the \`version\` field in \`package.json\`.
    - Create a version commit with conventional commit message and \`[skip ci]\` to avoid triggering CI.
    - Create a git tag (by default \`vX.Y.Z\`).
@@ -142,7 +142,7 @@ If there **are** worthwhile changes:
   - If changes exist: print a human-readable summary of the planned bump and key changes. No git or npm state changes.
 - Real run:
   - If no changes: output exactly \`No noteworthy changes in this release.\` and make no changes.
-  - If changes exist: perform \`npm version\`, push commit and tags, and print a short summary of what you did (including bump type and new tag).
+  - If changes exist: perform \`bun version\`, push commit and tags, and print a short summary of what you did (including bump type and new tag).
 
 Never create or modify GitHub Releases from this command. That is handled elsewhere (for example, by a separate workflow using \`gh release create --generate-notes\`).
 `;

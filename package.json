@@ -33,7 +33,7 @@
         "typecheck": "tsc --noEmit",
         "test": "vitest",
         "test:run": "vitest run",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "bun run build"
     },
     "dependencies": {
         "@opencode-ai/sdk": "^1.0.0",
