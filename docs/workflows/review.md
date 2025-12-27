@@ -48,8 +48,9 @@ The review workflow:
 - Only runs on non-draft pull requests
 - Installs OpenCode via `curl -fsSL https://opencode.ai/install | bash`
 - Fetches PR title, description, and commit SHA via `gh` API
-- Creates line-specific comments on files for violations
-- Comments "lgtm" if no significant issues found
+- Creates line-specific comments on files for violations by default
+- Optionally, when configured with the `--sticky-comment` flag in the underlying CLI, maintains a single sticky PR comment that summarizes all issues instead of individual inline comments
+- Comments "lgtm" if no significant issues found (either via inline comments or in the sticky comment summary)
 - Focuses on correctness, security, stability, and maintainability
 - Avoids style zealotry - only flags style issues that hide bugs or cause confusion
 
@@ -83,7 +84,7 @@ The review prompt is located at [`prompts/review.md`](../../prompts/review.md) a
 
 - Review only changes in the PR
 - Prioritize correctness, security, stability, and maintainability
-- Create line-specific comments using the gh CLI
+- Create line-specific comments using the gh CLI, or maintain a single sticky PR comment when sticky comment mode is enabled
 - Avoid style zealotry
 - Comment "lgtm" if no violations found
 - Rate severity (critical/high/medium/low)
