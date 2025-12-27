@@ -1,6 +1,6 @@
 {
     "name": "@activadee-ai/open-workflows",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "description": "AI-powered GitHub automation CLI - PR reviews, issue labeling, and doc sync",
     "keywords": [
         "github",
