@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { getContext, requireRepo } from '../lib/context.js';
-import { getPRDetails, getLocalDiff, ensureGhCli, ensureGhAuth } from '../lib/github.js';
+import { getPRDetails, getLocalDiff, ensureGhCli, ensureGhAuth, checkGhPermissions } from '../lib/github.js';
 import { ensureOpenCode, startServer, runOpenCode, stopServer } from '../lib/opencode.js';
 import { loadPrompt } from '../lib/prompts.js';
 import { log, banner, formatMessage } from '../lib/logger.js';
@@ -40,7 +40,15 @@ export const reviewCommand = new Command('review')
       } else {
         // PR mode: fetch from GitHub
         ensureGhCli();
-        if (ctx.mode === 'manual') ensureGhAuth();
+        ensureGhAuth();
+
+        // Check for required permissions
+        const perms = checkGhPermissions();
+        if (!perms.hasPullRequestWrite) {
+          log.warn('GitHub token lacks pull-requests:write permission.');
+          log.warn('PR comments may fail. To fix: re-authenticate with repo scope.');
+          log.warn('Run: gh auth refresh -s repo');
+        }
 
         const repo = requireRepo(ctx, options);
         const prNumber = options.pr ? parseInt(options.pr, 10) : ctx.prNumber;
