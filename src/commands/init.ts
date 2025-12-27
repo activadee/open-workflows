@@ -168,9 +168,9 @@ async function interactiveSelect(): Promise<WorkflowId[]> {
   const calculateMenuLines = (): string[] => {
     const lines: string[] = [];
     lines.push('');
-    lines.push(log.dim('═'.repeat(50)));
+    lines.push(pc.dim('═'.repeat(50)));
     lines.push('  Select workflows (↑/↓ to navigate, SPACE to toggle, ENTER to confirm)');
-    lines.push(log.dim('═'.repeat(50)));
+    lines.push(pc.dim('═'.repeat(50)));
 
     for (let i = 0; i < AVAILABLE_WORKFLOWS.length; i++) {
       const wf = AVAILABLE_WORKFLOWS[i];
@@ -179,10 +179,10 @@ async function interactiveSelect(): Promise<WorkflowId[]> {
       const name = isSelected ? pc.green(wf.name) : wf.name;
       const marker = i === cursorIndex ? pc.cyan('▶') : ' ';
       lines.push(`  ${marker} ${prefix} ${i + 1}. ${name}`);
-      lines.push(log.dim(`     ${wf.description}`));
+      lines.push(pc.dim(`     ${wf.description}`));
     }
 
-    lines.push(log.dim('─'.repeat(50)));
+    lines.push(pc.dim('─'.repeat(50)));
     
     const allMarker = AVAILABLE_WORKFLOWS.length === cursorIndex ? pc.cyan('▶') : ' ';
     const allText = allSelected ? '◉ Select All' : '○ Select All';
@@ -195,7 +195,7 @@ async function interactiveSelect(): Promise<WorkflowId[]> {
     const cancelMarker = AVAILABLE_WORKFLOWS.length + 2 === cursorIndex ? pc.cyan('▶') : ' ';
     lines.push(`  ${cancelMarker} ✕ Cancel`);
     
-    lines.push(log.dim('─'.repeat(50)));
+    lines.push(pc.dim('─'.repeat(50)));
     lines.push(`  Selected: ${selected.length}/${AVAILABLE_WORKFLOWS.length}`);
     
     return lines;
@@ -351,9 +351,9 @@ function writeWorkflowFile(workflowId: WorkflowId, targetDir: string): { success
 
 // Display preview of what will be created
 function displayPreview(selected: WorkflowId[], targetDir: string): void {
-  console.log('\n' + log.dim('═'.repeat(50)));
-  console.log('  Preview: Files to be created/modified');
-  console.log(log.dim('═'.repeat(50)) + '\n');
+  log.dim('═'.repeat(50));
+  log.info('Preview: Files to be created/modified');
+  log.dim('═'.repeat(50));
 
   const existingWorkflows = getExistingWorkflows(targetDir);
 
@@ -365,25 +365,24 @@ function displayPreview(selected: WorkflowId[], targetDir: string): void {
     const exists = fs.existsSync(filePath);
 
     if (exists) {
-      console.log(`  ${pc.yellow('MODIFY')} ${workflow.file}`);
-      console.log(log.dim(`     ${filePath}\n`));
+      log.info(`${pc.yellow('MODIFY')} ${workflow.file}`);
+      log.dim(`     ${filePath}`);
     } else {
-      console.log(`  ${pc.green('CREATE')} ${workflow.file}`);
-      console.log(log.dim(`     ${filePath}\n`));
+      log.info(`${pc.green('CREATE')} ${workflow.file}`);
+      log.dim(`     ${filePath}`);
     }
   }
 
   // Show existing files that won't be touched
   const existingNotSelected = existingWorkflows.filter(w => !selected.includes(w));
   if (existingNotSelected.length > 0) {
-    console.log(log.dim('─'.repeat(50)));
-    console.log('  Existing files (will be preserved):');
+    log.dim('─'.repeat(50));
+    log.info('Existing files (will be preserved):');
     for (const workflowId of existingNotSelected) {
       const workflow = AVAILABLE_WORKFLOWS.find(w => w.id === workflowId);
       if (!workflow) continue;
-      console.log(log.dim(`  • ${workflow.file}`));
+      log.dim(`  • ${workflow.file}`);
     }
-    console.log('');
   }
 }
 
@@ -425,9 +424,9 @@ export const initCommand = new Command('init')
       }
 
       try {
-        console.log('Welcome to open-workflows init!\n');
-        console.log('This command will help you set up GitHub Actions workflows.');
-        console.log('');
+        log.info('Welcome to open-workflows init!');
+        log.info('This command will help you set up GitHub Actions workflows.');
+        log.info('');
 
         selectedWorkflows = await interactiveSelect();
 
@@ -469,15 +468,15 @@ export const initCommand = new Command('init')
 
     // Dry run mode
     if (options.dryRun) {
-      console.log('\n' + log.dim('═'.repeat(50)));
-      console.log('  DRY RUN - No files were created');
-      console.log(log.dim('═'.repeat(50)) + '\n');
+      log.dim('═'.repeat(50));
+      log.info('DRY RUN - No files were created');
+      log.dim('═'.repeat(50));
 
       if (!options.verbose) {
         displayPreview(selectedWorkflows, targetDir);
       }
 
-      console.log(log.success('Dry run complete. Run without --dry-run to create files.'));
+      log.success('Dry run complete. Run without --dry-run to create files.');
       return;
     }
 
@@ -492,9 +491,9 @@ export const initCommand = new Command('init')
     }
 
     // Create workflow files
-    console.log('\n' + log.dim('═'.repeat(50)));
-    console.log('  Creating workflow files...');
-    console.log(log.dim('═'.repeat(50)) + '\n');
+    log.dim('═'.repeat(50));
+    log.info('Creating workflow files...');
+    log.dim('═'.repeat(50));
 
     let successCount = 0;
     let failCount = 0;
@@ -508,34 +507,34 @@ export const initCommand = new Command('init')
 
       if (result.success) {
         if (exists) {
-          console.log(`  ${pc.green('✓')} Updated ${workflow.file}`);
+          log.success(`Updated ${workflow.file}`);
         } else {
-          console.log(`  ${pc.green('✓')} Created ${workflow.file}`);
+          log.success(`Created ${workflow.file}`);
         }
         successCount++;
       } else {
-        console.log(`  ${pc.red('✖')} Failed to create ${workflow.file}: ${result.error}`);
+        log.error(`Failed to create ${workflow.file}: ${result.error}`);
         failCount++;
       }
     }
 
     // Summary
-    console.log('\n' + log.dim('─'.repeat(50)));
-    console.log(`  ${log.success(String(successCount))} workflow(s) created/updated`);
+    log.dim('─'.repeat(50));
+    log.success(`${successCount} workflow(s) created/updated`);
     if (failCount > 0) {
-      console.log(`  ${log.error(String(failCount))} workflow(s) failed`);
+      log.error(`${failCount} workflow(s) failed`);
     }
-    console.log(log.dim('─'.repeat(50)) + '\n');
+    log.dim('─'.repeat(50));
 
     // Next steps
-    console.log('Next steps:');
-    console.log('  1. Review the created workflow files');
-    console.log('  2. Add MINIMAX_API_KEY secret to your repository');
-    console.log('  3. Commit and push the workflow files');
-    console.log('');
-    console.log(`  To add the secret, run:`);
-    console.log(`    gh secret set MINIMAX_API_KEY -b"your-api-key"`);
-    console.log('');
+    log.info('Next steps:');
+    log.info('  1. Review the created workflow files');
+    log.info('  2. Add MINIMAX_API_KEY secret to your repository');
+    log.info('  3. Commit and push the workflow files');
+    log.info('');
+    log.info('  To add the secret, run:');
+    log.info('    gh secret set MINIMAX_API_KEY -b"your-api-key"');
+    log.info('');
 
     if (failCount > 0) {
       process.exit(1);
