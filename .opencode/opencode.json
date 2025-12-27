@@ -1,0 +1,6 @@
+{
+  "plugin": [
+    "@activadee-ai/open-workflows@next"
+  ],
+  "$schema": "https://opencode.ai/config.json"
+}
