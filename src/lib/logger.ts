@@ -7,7 +7,7 @@ export const log = {
   warn: (msg: string) => console.log(pc.yellow('⚠'), msg),
   error: (msg: string) => console.error(pc.red('✖'), msg),
   step: (msg: string) => console.log(pc.cyan('→'), msg),
-  dim: (msg: string) => console.log(pc.dim(msg)),
+  dim: (msg: string) => pc.dim(msg),
 };
 
 export function banner() {

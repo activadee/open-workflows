@@ -4,6 +4,7 @@ import { labelCommand } from '../src/commands/label.js';
 import { docSyncCommand } from '../src/commands/doc-sync.js';
 import { releaseCommand } from '../src/commands/release.js';
 import { interactiveCommand } from '../src/commands/interactive.js';
+import { initCommand } from '../src/commands/init.js';
 
 const program = new Command();
 
@@ -19,6 +20,7 @@ program.addCommand(labelCommand);
 program.addCommand(docSyncCommand);
 program.addCommand(releaseCommand);
 program.addCommand(interactiveCommand);
+program.addCommand(initCommand);
 
 // Default action: show help
 program.action(() => {
