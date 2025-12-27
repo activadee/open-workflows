@@ -177,11 +177,124 @@ export function ensureGhCli(): void {
 }
 
 export function ensureGhAuth(): void {
+  // First, ensure GITHUB_TOKEN is also available as GH_TOKEN for gh CLI
+  if (process.env.GITHUB_TOKEN && !process.env.GH_TOKEN) {
+    process.env.GH_TOKEN = process.env.GITHUB_TOKEN;
+  }
+
   try {
     execSync('gh auth status', { stdio: 'ignore' });
   } catch {
+    // Try to use GITHUB_TOKEN/GH_TOKEN environment variable
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (token) {
+      try {
+        // Export token for gh CLI to use
+        execSync(`echo "${token}" | gh auth login --with-token`, { stdio: 'ignore' });
+        return;
+      } catch {
+        // Fall through to error
+      }
+    }
+    throw new Error(
+      'GitHub CLI not authenticated. Run: gh auth login\n' +
+      'Or set GITHUB_TOKEN environment variable.'
+    );
+  }
+}
+
+export interface GhPermissionStatus {
+  authenticated: boolean;
+  hasPullRequestWrite: boolean;
+  hasIssuesWrite: boolean;
+  hasContentsWrite: boolean;
+  tokenScopes?: string[];
+}
+
+export function checkGhPermissions(): GhPermissionStatus {
+  const status: GhPermissionStatus = {
+    authenticated: false,
+    hasPullRequestWrite: false,
+    hasIssuesWrite: false,
+    hasContentsWrite: false,
+    tokenScopes: [],
+  };
+
+  try {
+    execSync('gh auth status', { stdio: 'ignore' });
+    status.authenticated = true;
+  } catch {
+    return status;
+  }
+
+  try {
+    const userJson = execSync('gh api user --jq ".login"', { encoding: 'utf-8' });
+    status.authenticated = !!userJson.trim();
+  } catch {
+    return status;
+  }
+
+  try {
+    const scopesJson = execSync('gh auth status --jq ".token_scopes" 2>/dev/null || echo "[]"', {
+      encoding: 'utf-8',
+    });
+    const scopes: string[] = JSON.parse(scopesJson.trim() || '[]');
+    status.tokenScopes = scopes;
+
+    status.hasPullRequestWrite = scopes.some(
+      (s: string) => s.includes('repo') || s.includes('pull-request')
+    );
+    status.hasIssuesWrite = scopes.some(
+      (s: string) => s.includes('repo') || s.includes('issues')
+    );
+    status.hasContentsWrite = scopes.some(
+      (s: string) => s.includes('repo') || s.includes('contents')
+    );
+  } catch {
+    status.hasPullRequestWrite = true;
+    status.hasIssuesWrite = true;
+    status.hasContentsWrite = true;
+  }
+
+  return status;
+}
+
+export function requireGhPermission(required: 'pull-request' | 'issue' | 'contents'): void {
+  const perms = checkGhPermissions();
+
+  if (!perms.authenticated) {
     throw new Error(
       'GitHub CLI not authenticated. Run: gh auth login'
     );
+  }
+
+  switch (required) {
+    case 'pull-request':
+      if (!perms.hasPullRequestWrite) {
+        throw new Error(
+          'GitHub token lacks pull-requests:write permission. ' +
+          'This is needed to create PR comments. ' +
+          'Please re-authenticate with: gh auth refresh -s repo'
+        );
+      }
+      break;
+    case 'issue':
+      if (!perms.hasIssuesWrite) {
+        throw new Error(
+          'GitHub token lacks issues:write permission. ' +
+          'This is needed to create issue comments and labels. ' +
+          'Please re-authenticate with: gh auth refresh -s repo'
+        );
+      }
+      break;
+    case 'contents':
+      if (!perms.hasContentsWrite) {
+        throw new Error(
+          'GitHub token lacks contents:write permission. ' +
+          'This is needed to commit changes. ' +
+          'Please re-authenticate with: gh auth refresh -s repo'
+        );
+      }
+      break;
   }
 }
