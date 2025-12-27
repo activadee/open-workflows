@@ -30,36 +30,46 @@ Be specific - reference file names and line numbers when possible.
 
 #### Creating Comments on Files
 
-Use the gh CLI to create comments on the files for violations. Try to leave the comment on the exact line number. If you have a suggested fix, include it in a suggestion code block.
+Create **one single pull request review** that contains:
+- A clear overall summary in the review body
+- A small set of targeted inline comments for the most important issues (prefer 3–10, not every nit)
 
-If you are writing suggested fixes, BE SURE THAT the change you are recommending is valid TypeScript. Often issues have missing closing "}" or other syntax errors.
+Use the `gh` CLI **once** to create the review with inline comments instead of posting many separate comments.
 
-Generally, write a comment instead of writing a suggested change if you can help it.
+If you have a suggested fix, include it in a suggestion code block inside the inline comment body. Make sure any suggested changes are valid TypeScript and syntactically correct.
 
-**Command format for creating comments:**
+**Command format for creating a single review with inline comments:**
 
 ```bash
 gh api \
   --method POST \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
-  /repos/$REPO/pulls/$PR_NUMBER/comments \
-  -f 'body=[summary of issue]' \
-  -f 'commit_id=$COMMIT_SHA' \
-  -f 'path=[path-to-file]' \
-  -f 'line=[line]' \
-  -f 'side=RIGHT'
+  /repos/$REPO/pulls/$PR_NUMBER/reviews \
+  -f 'event=COMMENT' \
+  -f 'body=[overall review summary]' \
+  -f 'comments[0].body=[first inline issue summary]' \
+  -f 'comments[0].path=[path-to-file]' \
+  -F 'comments[0].line=[line-number]' \
+  -f 'comments[0].side=RIGHT' \
+  -f 'comments[1].body=[second inline issue summary]' \
+  -f 'comments[1].path=[path-to-file]' \
+  -F 'comments[1].line=[line-number]' \
+  -f 'comments[1].side=RIGHT'
 ```
 
-Only create comments for actual violations.
+Guidelines:
+- Use `line` + `side` for positioning (do **not** use `position` or `subject_type`).
+- Only create inline comments for actual, meaningful issues.
+- It is better to have a few high‑quality inline comments than many trivial ones.
 
 #### Approval
 
-If the code follows all guidelines, comment "lgtm" on the issue using gh cli AND NOTHING ELSE.
+Use the pull request **review API** instead of standalone issue comments:
 
-If the PR looks good but has minor issues, provide feedback and approve with a brief explanation.
-
-If there are significant issues, provide detailed feedback on each issue without approving.
+- If the code follows all guidelines and you would approve it, create a review with `event=APPROVE` and a short body (for example `"lgtm"`). Inline comments should be empty in this case.
+- If the PR looks good but has minor issues, use `event=COMMENT` and include both an overall summary and inline comments for the most important issues.
+- If there are significant issues that should block the PR, use `event=REQUEST_CHANGES` with a clear overall summary and inline comments pointing to the blocking problems.
 
 ## Output
 
