@@ -18,6 +18,7 @@ export interface CommandOptions {
   local?: boolean;
   dryRun?: boolean;
   verbose?: boolean;
+  stickyComment?: boolean;
 }
 
 import type { Part, Message } from '@opencode-ai/sdk';

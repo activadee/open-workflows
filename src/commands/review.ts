@@ -13,6 +13,7 @@ export const reviewCommand = new Command('review')
   .option('-m, --model <model>', 'AI model to use', 'minimax/MiniMax-M2.1')
   .option('-l, --local', 'Review local git changes instead of a PR')
   .option('--dry-run', 'Print analysis without posting to GitHub')
+  .option('--sticky-comment', 'Use a single sticky PR comment instead of inline comments')
   .option('-v, --verbose', 'Show detailed output')
   .action(async (options: CommandOptions) => {
     banner();
@@ -39,7 +40,9 @@ export const reviewCommand = new Command('review')
           return;
         }
 
-        prompt = loadPrompt('review', {}) + `\n\n## Changes to Review\n\n\`\`\`diff\n${diff}\n\`\`\``;
+        prompt = loadPrompt('review', {
+          STICKY_COMMENT_MODE: 'false',
+        }) + `\n\n## Changes to Review\n\n\`\`\`diff\n${diff}\n\`\`\``;
       } else {
         ensureGhCli();
         ensureGhAuth();
@@ -61,12 +64,15 @@ export const reviewCommand = new Command('review')
         const pr = getPRDetails(repo, prNumber);
         commitSha = pr.headSha;
 
+        const stickyMode = options.stickyComment ? 'true' : 'false';
+
         prompt = loadPrompt('review', {
           PR_NUMBER: prNumber,
           PR_TITLE: pr.title,
           PR_DESCRIPTION: pr.body,
           COMMIT_SHA: commitSha,
           REPO: repo,
+          STICKY_COMMENT_MODE: stickyMode,
         }) + `\n\n## PR Diff\n\n\`\`\`diff\n${pr.diff}\n\`\`\``;
       }
 
