@@ -4,7 +4,7 @@ import { getPRDetails, getLocalDiff, ensureGhCli, ensureGhAuth, checkGhPermissio
 import { ensureOpenCode, startServer, runOpenCode, stopServer } from '../lib/opencode.js';
 import { loadPrompt } from '../lib/prompts.js';
 import { log, banner, formatMessage } from '../lib/logger.js';
-import type { CommandOptions } from '../types.js';
+import type { CommandOptions, OpenCodePermission } from '../types.js';
 
 export const reviewCommand = new Command('review')
   .description('Review a pull request or local changes')
@@ -20,14 +20,17 @@ export const reviewCommand = new Command('review')
     try {
       const ctx = getContext(options);
 
+      const permission: OpenCodePermission = options.dryRun
+        ? { bash: { '*': 'deny' } }
+        : { bash: { 'gh*': 'allow', '*': 'deny' } };
+
       await ensureOpenCode();
-      await startServer();
+      await startServer(permission);
 
       let prompt: string;
       let commitSha: string | undefined;
 
       if (options.local || ctx.mode === 'local') {
-        // Local mode: review git diff
         log.info('Reviewing local changes...');
         const diff = getLocalDiff();
 
@@ -38,11 +41,9 @@ export const reviewCommand = new Command('review')
 
         prompt = loadPrompt('review', {}) + `\n\n## Changes to Review\n\n\`\`\`diff\n${diff}\n\`\`\``;
       } else {
-        // PR mode: fetch from GitHub
         ensureGhCli();
         ensureGhAuth();
 
-        // Check for required permissions
         const perms = checkGhPermissions();
         if (!perms.hasPullRequestWrite) {
           log.warn('GitHub token lacks pull-requests:write permission.');
@@ -69,17 +70,9 @@ export const reviewCommand = new Command('review')
         }) + `\n\n## PR Diff\n\n\`\`\`diff\n${pr.diff}\n\`\`\``;
       }
 
-      // Set up permissions
-      const bashPerms: Record<string, 'allow' | 'deny'> = options.dryRun
-        ? { '*': 'deny' }
-        : { 'gh*': 'allow', '*': 'deny' };
-      const permissions = { bash: bashPerms };
-
-      // Run analysis
       const result = await runOpenCode({
         model: options.model || 'minimax/MiniMax-M2.1',
         prompt,
-        permissions,
         onMessage: formatMessage,
       });
 

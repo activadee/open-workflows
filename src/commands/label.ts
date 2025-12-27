@@ -4,7 +4,7 @@ import { getIssueDetails, getRepoLabels, ensureGhCli, ensureGhAuth } from '../li
 import { ensureOpenCode, startServer, runOpenCode, stopServer } from '../lib/opencode.js';
 import { loadPrompt } from '../lib/prompts.js';
 import { log, banner, formatMessage } from '../lib/logger.js';
-import type { CommandOptions } from '../types.js';
+import type { CommandOptions, OpenCodePermission } from '../types.js';
 
 export const labelCommand = new Command('label')
   .description('Automatically label a GitHub issue')
@@ -25,10 +25,13 @@ export const labelCommand = new Command('label')
       const repo = requireRepo(ctx, options);
       const issueNumber = requireIssue(ctx, options);
 
-      await ensureOpenCode();
-      await startServer();
+      const permission: OpenCodePermission = options.dryRun
+        ? { bash: { '*': 'deny' } }
+        : { bash: { 'gh issue*': 'allow', 'gh label*': 'allow', '*': 'deny' } };
 
-      // Get issue and labels
+      await ensureOpenCode();
+      await startServer(permission);
+
       const issue = getIssueDetails(repo, issueNumber);
       const availableLabels = getRepoLabels(repo);
 
@@ -51,15 +54,9 @@ ${issue.body}
 ${availableLabels.join(', ')}
 `;
 
-      const bashPerms: Record<string, 'allow' | 'deny'> = options.dryRun
-        ? { '*': 'deny' }
-        : { 'gh issue*': 'allow', 'gh label*': 'allow', '*': 'deny' };
-      const permissions = { bash: bashPerms };
-
       const result = await runOpenCode({
         model: options.model || 'minimax/MiniMax-M2.1',
         prompt,
-        permissions,
         onMessage: formatMessage,
       });
 

@@ -1,10 +1,15 @@
 import { execSync } from 'child_process';
 import { createOpencode } from '@opencode-ai/sdk';
 import type { Part, EventMessageUpdated, Message } from '@opencode-ai/sdk';
-import type { OpenCodeOptions } from '../types.js';
+import type { OpenCodeOptions, OpenCodePermission } from '../types.js';
 import { log } from './logger.js';
 
 let opencodeInstance: Awaited<ReturnType<typeof createOpencode>> | null = null;
+let currentPermission: OpenCodePermission | undefined = undefined;
+
+function permissionsEqual(a: OpenCodePermission | undefined, b: OpenCodePermission | undefined): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
 
 export async function ensureOpenCode(): Promise<void> {
   log.dim('Initializing OpenCode SDK...');
@@ -26,10 +31,16 @@ export async function ensureOpenCode(): Promise<void> {
   }
 }
 
-export async function startServer(): Promise<void> {
-  if (opencodeInstance) {
-    log.dim('OpenCode already running');
+export async function startServer(permission?: OpenCodePermission): Promise<void> {
+  if (opencodeInstance && permissionsEqual(currentPermission, permission)) {
+    log.dim('OpenCode already running with matching permissions');
     return;
+  }
+
+  if (opencodeInstance) {
+    log.dim('Restarting OpenCode server with new permissions...');
+    opencodeInstance.server.close();
+    opencodeInstance = null;
   }
 
   log.step('Starting OpenCode server...');
@@ -39,9 +50,11 @@ export async function startServer(): Promise<void> {
     port: 4199,
     config: {
       model: 'minimax/MiniMax-M2.1',
+      permission,
     },
   });
 
+  currentPermission = permission;
   log.success('OpenCode server started');
 }
 

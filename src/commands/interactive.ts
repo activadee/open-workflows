@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { getContext } from '../lib/context.js';
 import { ensureOpenCode, startServer, runOpenCode, stopServer } from '../lib/opencode.js';
 import { log, banner, formatMessage } from '../lib/logger.js';
+import type { OpenCodePermission } from '../types.js';
 
 interface InteractiveOptions {
   model?: string;
@@ -30,7 +31,6 @@ export const interactiveCommand = new Command('interactive')
         throw new Error('No comment found in event payload');
       }
 
-      // Extract command after /oc or /opencode
       const match = commentBody.match(/\/(?:oc|opencode)\s*(.*)/i);
       if (!match) {
         log.warn('No /oc or /opencode command found in comment');
@@ -39,8 +39,13 @@ export const interactiveCommand = new Command('interactive')
 
       const userPrompt = match[1].trim() || 'Help with this issue/PR';
 
+      const permission: OpenCodePermission = {
+        bash: { 'gh*': 'allow', '*': 'deny' },
+        edit: 'allow',
+      };
+
       await ensureOpenCode();
-      await startServer();
+      await startServer(permission);
 
       const contextInfo = ctx.prNumber
         ? `This is PR #${ctx.prNumber} in ${ctx.repository}`
@@ -61,11 +66,6 @@ Respond helpfully and take any requested actions using the gh CLI.
       await runOpenCode({
         model: options.model || 'minimax/MiniMax-M2.1',
         prompt,
-        permissions: {
-          bash: { 'gh*': 'allow', '*': 'deny' },
-          write: true,
-          edit: true,
-        },
         onMessage: formatMessage,
       });
 

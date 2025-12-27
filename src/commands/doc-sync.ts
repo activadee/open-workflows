@@ -4,7 +4,7 @@ import { getPRDetails, getLocalDiff, ensureGhCli, ensureGhAuth } from '../lib/gi
 import { ensureOpenCode, startServer, runOpenCode, stopServer } from '../lib/opencode.js';
 import { loadPrompt } from '../lib/prompts.js';
 import { log, banner, formatMessage } from '../lib/logger.js';
-import type { CommandOptions } from '../types.js';
+import type { CommandOptions, OpenCodePermission } from '../types.js';
 
 export const docSyncCommand = new Command('doc-sync')
   .description('Sync documentation with code changes')
@@ -20,8 +20,12 @@ export const docSyncCommand = new Command('doc-sync')
     try {
       const ctx = getContext(options);
 
+      const permission: OpenCodePermission = options.dryRun
+        ? { bash: { '*': 'deny' }, edit: 'deny' }
+        : { bash: { 'git commit*': 'allow', 'git push*': 'allow', '*': 'deny' }, edit: 'allow' };
+
       await ensureOpenCode();
-      await startServer();
+      await startServer(permission);
 
       let diff: string;
 
@@ -57,19 +61,9 @@ ${diff}
 \`\`\`
 `;
 
-      const bashPerms: Record<string, 'allow' | 'deny'> = options.dryRun
-        ? { '*': 'deny' }
-        : { 'git commit*': 'allow', 'git push*': 'allow', '*': 'deny' };
-      const permissions = {
-        bash: bashPerms,
-        write: !options.dryRun,
-        edit: !options.dryRun,
-      };
-
       const result = await runOpenCode({
         model: options.model || 'minimax/MiniMax-M2.1',
         prompt,
-        permissions,
         onMessage: formatMessage,
       });
 

@@ -42,14 +42,15 @@ export type {
   EventMessagePartUpdated,
 } from '@opencode-ai/sdk';
 
+export type OpenCodePermission = {
+  bash?: 'allow' | 'deny' | 'ask' | Record<string, 'allow' | 'deny' | 'ask'>;
+  edit?: 'allow' | 'deny' | 'ask';
+  webfetch?: 'allow' | 'deny' | 'ask';
+};
+
 export interface OpenCodeOptions {
   model: string;
   prompt: string;
-  permissions?: {
-    bash?: Record<string, 'allow' | 'deny'>;
-    write?: boolean;
-    edit?: boolean;
-  };
   onMessage?: (message: { info: Message; parts: Part[] }) => void;
 }
 

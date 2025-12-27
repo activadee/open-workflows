@@ -5,7 +5,7 @@ import { ensureGhCli, ensureGhAuth, getLatestReleaseTag } from '../lib/github.js
 import { ensureOpenCode, startServer, runOpenCode, stopServer } from '../lib/opencode.js';
 import { loadPrompt } from '../lib/prompts.js';
 import { log, banner, formatMessage } from '../lib/logger.js';
-import type { CommandOptions } from '../types.js';
+import type { CommandOptions, OpenCodePermission } from '../types.js';
 
 interface ReleaseOptions extends CommandOptions {
   fromTag?: string;
@@ -48,8 +48,12 @@ export const releaseCommand = new Command('release')
 
       log.info(`Preparing release from ${fromTag || 'beginning'} to ${toTag}`);
 
+      const permission: OpenCodePermission = options.dryRun
+        ? { bash: { 'gh api*': 'allow', '*': 'deny' } }
+        : { bash: { 'gh api*': 'allow', 'git*': 'allow', 'npm version*': 'allow', '*': 'deny' } };
+
       await ensureOpenCode();
-      await startServer();
+      await startServer(permission);
 
       const prompt = loadPrompt('release', {
         REPO: repo,
@@ -59,19 +63,9 @@ export const releaseCommand = new Command('release')
         DRY_RUN: options.dryRun ? 'true' : 'false',
       });
 
-      const bashPerms: Record<string, 'allow' | 'deny'> = options.dryRun
-        ? { 'gh api*': 'allow', '*': 'deny' }
-        : {
-            'gh api*': 'allow',
-            'git*': 'allow',
-            'npm version*': 'allow',
-            '*': 'deny',
-          };
-
       const result = await runOpenCode({
         model: options.model || 'minimax/MiniMax-M2.1',
         prompt,
-        permissions: { bash: bashPerms },
         onMessage: formatMessage,
       });
 
