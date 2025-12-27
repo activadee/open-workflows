@@ -78,13 +78,12 @@ jobs:
       share: false
 ```
 
-## Prompt
+## How It Works
 
-The review prompt is located at [`prompts/review.md`](../../prompts/review.md) and instructs OpenCode to:
+The review workflow uses OpenCode to analyze pull request changes. When a PR is ready for review:
 
-- Review only changes in the PR
-- Prioritize correctness, security, stability, and maintainability
-- Create line-specific comments using the gh CLI, or maintain a single sticky PR comment when sticky comment mode is enabled
-- Avoid style zealotry
-- Comment "lgtm" if no violations found
-- Rate severity (critical/high/medium/low)
+1. OpenCode fetches the PR details and changes
+2. Reviews the code against best practices
+3. Focuses on correctness, security, stability, and maintainability
+4. Posts line-specific comments on issues found
+5. Comments "lgtm" if no significant issues found

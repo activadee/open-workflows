@@ -4,6 +4,7 @@ export { labelCommand } from './commands/label.js';
 export { docSyncCommand } from './commands/doc-sync.js';
 export { releaseCommand } from './commands/release.js';
 export { interactiveCommand } from './commands/interactive.js';
+export { initCommand } from './commands/init.js';
 
 // Library utilities
 export { getContext, requirePR, requireIssue, requireRepo } from './lib/context.js';

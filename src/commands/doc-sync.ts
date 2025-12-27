@@ -22,7 +22,7 @@ export const docSyncCommand = new Command('doc-sync')
 
       const permission: OpenCodePermission = options.dryRun
         ? { bash: { '*': 'deny' }, edit: 'deny' }
-        : { bash: { 'git commit*': 'allow', 'git push*': 'allow', '*': 'deny' }, edit: 'allow' };
+        : { bash: { 'git*': 'allow' }, edit: 'allow' };
 
       await ensureOpenCode();
       await startServer(permission);

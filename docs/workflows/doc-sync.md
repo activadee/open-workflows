@@ -83,10 +83,11 @@ jobs:
       model: opencode/big-pickle
 ```
 
-## Prompt
+## How It Works
 
-The doc-sync prompt is located at [`prompts/doc-sync.md`](../../prompts/doc-sync.md) and instructs OpenCode to:
-- Review code changes in the PR
-- Identify documentation that needs updating
-- Edit and commit documentation files
-- Skip updates if none are needed
+The doc-sync workflow uses OpenCode to analyze code changes and automatically update documentation. When a PR is opened or updated:
+
+1. OpenCode reviews the code changes
+2. Identifies documentation that needs updating
+3. Edits documentation files to reflect the changes
+4. Commits with `[skip ci]` to avoid triggering additional workflows
