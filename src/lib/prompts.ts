@@ -1,12 +1,7 @@
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Prompts are bundled in the src/prompts directory
-const promptsDir = join(__dirname, '..', 'prompts');
+import { review } from '../prompts/review.js';
+import { label } from '../prompts/label.js';
+import { docSync } from '../prompts/doc-sync.js';
+import { release } from '../prompts/release.js';
 
 const promptCache: Record<string, string> = {};
 
@@ -14,10 +9,15 @@ export function loadPrompt(
   name: 'review' | 'label' | 'doc-sync' | 'release',
   variables: Record<string, string | number | undefined> = {}
 ): string {
-  // Load from cache or file
+  // Load from cache or bundle
   if (!promptCache[name]) {
-    const filePath = join(promptsDir, `${name}.md`);
-    promptCache[name] = readFileSync(filePath, 'utf-8');
+    const prompts: Record<string, string> = {
+      review,
+      label,
+      'doc-sync': docSync,
+      release,
+    };
+    promptCache[name] = prompts[name];
   }
 
   let prompt = promptCache[name];
