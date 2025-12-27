@@ -120,9 +120,9 @@ No noteworthy changes in this release.
 If there **are** worthwhile changes:
 
 1. Decide the bump type (`patch`, `minor`, or `major`).
-2. Run `npm version <type>` (without `--no-git-tag-version`). This will:
+2. Run `npm version <type> -m "chore(release): %s [skip ci]"` (without `--no-git-tag-version`). This will:
    - Bump the `version` field in `package.json`.
-   - Create a version commit.
+   - Create a version commit with conventional commit message and `[skip ci]` to avoid triggering CI.
    - Create a git tag (by default `vX.Y.Z`).
 3. Push the commit and tag to the default remote. For example:
 
