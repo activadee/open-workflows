@@ -21,11 +21,11 @@ export async function ensureOpenCode(): Promise<void> {
     log.warn('OpenCode CLI not found. Installing opencode-ai globally...');
 
     try {
-      execSync('npm install -g opencode-ai', { stdio: 'inherit' });
+      execSync('bun install -g opencode-ai', { stdio: 'inherit' });
       log.success('Installed opencode-ai globally.');
     } catch (error) {
       throw new Error(
-        'Failed to install opencode-ai globally. Please install it manually with "npm install -g opencode-ai".'
+        'Failed to install opencode-ai globally. Please install it manually with "bun install -g opencode-ai".'
       );
     }
   }

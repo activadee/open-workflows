@@ -11,7 +11,7 @@ Powered by [OpenCode](https://opencode.ai).
 npx @activadee-ai/open-workflows <command>
 
 # Or install globally
-npm install -g @activadee-ai/open-workflows
+bun install -g @activadee-ai/open-workflows
 ```
 
 ## Commands
