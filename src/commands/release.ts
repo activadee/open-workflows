@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { Command } from 'commander';
 import { getContext, requireRepo } from '../lib/context.js';
 import { ensureGhCli, ensureGhAuth, getLatestReleaseTag } from '../lib/github.js';
@@ -9,21 +10,15 @@ import type { CommandOptions } from '../types.js';
 interface ReleaseOptions extends CommandOptions {
   fromTag?: string;
   toTag?: string;
-  repo?: string;
-  dryRun?: boolean;
-  draft?: boolean;
-  prerelease?: boolean;
 }
 
 export const releaseCommand = new Command('release')
-  .description('Create a GitHub release with noteworthy changes')
-  .option('--from-tag <tag>', 'Starting tag (defaults to latest release)')
-  .option('--to-tag <tag>', 'Ending tag (defaults to current HEAD)')
+  .description('Prepare a new version by bumping package.json and tagging')
+  .option('--from-tag <tag>', 'Starting tag (defaults to latest GitHub release)')
+  .option('--to-tag <tag>', 'Ending ref (defaults to current HEAD)')
   .option('-r, --repo <owner/repo>', 'Repository (owner/repo)')
   .option('-m, --model <model>', 'AI model to use', 'minimax/MiniMax-M2.1')
-  .option('--draft', 'Create a draft release')
-  .option('--prerelease', 'Create a prerelease')
-  .option('--dry-run', 'Preview release notes without creating release')
+  .option('--dry-run', 'Preview planned version bump and changes without modifying git or npm')
   .option('-v, --verbose', 'Show detailed output')
   .action(async (options: ReleaseOptions) => {
     banner();
@@ -60,15 +55,14 @@ export const releaseCommand = new Command('release')
         REPO: repo,
         FROM_TAG: fromTag || 'beginning',
         TO_TAG: toTag,
-        DRAFT: options.draft ? 'true' : 'false',
-        PRERELEASE: options.prerelease ? 'true' : 'false',
+        BRANCH: ctx.branch || '',
         DRY_RUN: options.dryRun ? 'true' : 'false',
       });
 
       const bashPerms: Record<string, 'allow' | 'deny'> = options.dryRun
         ? { 'gh api*': 'allow', '*': 'deny' }
         : {
-            'gh*': 'allow',
+            'gh api*': 'allow',
             'git*': 'allow',
             'npm version*': 'allow',
             '*': 'deny',
@@ -81,12 +75,41 @@ export const releaseCommand = new Command('release')
         onMessage: formatMessage,
       });
 
+      const trimmedResult = (result || '').trim();
+
       if (options.dryRun) {
-        console.log('\n--- RELEASE NOTES PREVIEW ---\n');
-        if (result) console.log(result);
+        console.log('\n--- RELEASE PREVIEW ---\n');
+        if (trimmedResult) console.log(trimmedResult);
         console.log('\n--- END PREVIEW ---\n');
       } else {
-        log.success('Release processed by OpenCode!');
+        if (trimmedResult === 'No noteworthy changes in this release.') {
+          log.info('No noteworthy changes detected; skipping GitHub release.');
+        } else {
+          let latestTag: string | null = null;
+
+          try {
+            latestTag = execSync('git describe --tags --abbrev=0', {
+              encoding: 'utf-8',
+            })
+              .toString()
+              .trim();
+          } catch {
+            log.warn('No git tag found after version bump; skipping GitHub release.');
+          }
+
+          if (latestTag) {
+            log.step(`Creating GitHub release ${latestTag} with generated notes...`);
+            try {
+              execSync(`gh release create "${latestTag}" --repo ${repo} --generate-notes`, {
+                stdio: 'inherit',
+              });
+              log.success(`GitHub release ${latestTag} created.`);
+            } catch (e) {
+              log.error('Failed to create GitHub release');
+              throw e;
+            }
+          }
+        }
       }
     } catch (error) {
       log.error(error instanceof Error ? error.message : String(error));
