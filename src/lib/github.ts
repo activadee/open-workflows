@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import type { PRDetails, IssueDetails } from '../types.js';
+import type { PRDetails, IssueDetails, CommitInfo } from '../types.js';
 import { log } from './logger.js';
 
 export function getPRDetails(repo: string, prNumber: number): PRDetails {
@@ -66,6 +66,101 @@ export function getLocalDiff(): string {
     
     // Fall back to diff from last commit
     return execSync('git diff HEAD~1', { encoding: 'utf-8' });
+  } catch {
+    return '';
+  }
+}
+
+export function getRepoTags(repo: string): string[] {
+  log.step(`Fetching tags for ${repo}...`);
+
+  const tagsJson = execSync(
+    `gh api repos/${repo}/tags --paginate`,
+    { encoding: 'utf-8' }
+  );
+  const tags = JSON.parse(tagsJson);
+  return tags.map((t: { name: string }) => t.name);
+}
+
+export function getLatestReleaseTag(repo: string): string | null {
+  try {
+    const releaseJson = execSync(
+      `gh api repos/${repo}/releases/latest`,
+      { encoding: 'utf-8' }
+    );
+    const release = JSON.parse(releaseJson);
+    return release.tag_name || null;
+  } catch {
+    return null;
+  }
+}
+
+export function getCommitsInRange(repo: string, fromRef: string, toRef: string): CommitInfo[] {
+  log.step(`Fetching commits from ${fromRef} to ${toRef}...`);
+
+  const commitsJson = execSync(
+    `gh api repos/${repo}/compare/${fromRef}...${toRef} --jq '.commits[] | {sha: .sha, message: .commit.message, author: .author.login, committer: .committer.login, date: .commit.author.date}'`,
+    { encoding: 'utf-8' }
+  );
+
+  if (!commitsJson.trim()) {
+    return [];
+  }
+
+  const commits = commitsJson.split('\n').filter(line => line.trim());
+  return commits.map(line => JSON.parse(line));
+}
+
+export function getCommitWithPR(repo: string, sha: string): { prNumber?: number; prTitle?: string } {
+  try {
+    const resultJson = execSync(
+      `gh api repos/${repo}/commits/${sha}/pulls --jq '.[0] // empty'`,
+      { encoding: 'utf-8' }
+    );
+
+    if (!resultJson.trim()) {
+      return {};
+    }
+
+    const pr = JSON.parse(resultJson);
+    return {
+      prNumber: pr.number,
+      prTitle: pr.title,
+    };
+  } catch {
+    return {};
+  }
+}
+
+export function createGitHubRelease(
+  repo: string,
+  tag: string,
+  name: string,
+  body: string,
+  draft: boolean = false,
+  prerelease: boolean = false
+): void {
+  log.step(`Creating release ${tag}...`);
+
+  const draftArg = draft ? '--draft' : '';
+  const prereleaseArg = prerelease ? '--prerelease' : '';
+
+  execSync(
+    `gh release create "${tag}" --repo ${repo} --title "${name}" --notes "${body}" ${draftArg} ${prereleaseArg}`,
+    { encoding: 'utf-8' }
+  );
+
+  log.success(`Release ${tag} created successfully!`);
+}
+
+export function generateReleaseNotes(repo: string, tag: string, previousTag: string): string {
+  try {
+    const notesJson = execSync(
+      `gh api repos/${repo}/releases/generate-notes --field tag_name="${tag}" --field previous_tag_name="${previousTag}"`,
+      { encoding: 'utf-8' }
+    );
+    const result = JSON.parse(notesJson);
+    return result.body || '';
   } catch {
     return '';
   }

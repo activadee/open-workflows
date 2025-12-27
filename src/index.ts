@@ -2,6 +2,7 @@
 export { reviewCommand } from './commands/review.js';
 export { labelCommand } from './commands/label.js';
 export { docSyncCommand } from './commands/doc-sync.js';
+export { releaseCommand } from './commands/release.js';
 export { interactiveCommand } from './commands/interactive.js';
 
 // Library utilities
@@ -14,6 +15,12 @@ export {
   getIssueDetails,
   getRepoLabels,
   getLocalDiff,
+  getRepoTags,
+  getLatestReleaseTag,
+  getCommitsInRange,
+  getCommitWithPR,
+  createGitHubRelease,
+  generateReleaseNotes,
   ensureGhCli,
   ensureGhAuth,
 } from './lib/github.js';

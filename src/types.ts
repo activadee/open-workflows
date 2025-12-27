@@ -69,3 +69,13 @@ export interface IssueDetails {
   body: string;
   labels: string[];
 }
+
+export interface CommitInfo {
+  sha: string;
+  message: string;
+  author: string;
+  committer: string;
+  date: string;
+  prNumber?: number;
+  prTitle?: string;
+}

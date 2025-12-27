@@ -11,7 +11,7 @@ const promptsDir = join(__dirname, '..', 'prompts');
 const promptCache: Record<string, string> = {};
 
 export function loadPrompt(
-  name: 'review' | 'label' | 'doc-sync',
+  name: 'review' | 'label' | 'doc-sync' | 'release',
   variables: Record<string, string | number | undefined> = {}
 ): string {
   // Load from cache or file
