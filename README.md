@@ -1,268 +1,133 @@
 # open-workflows
 
-AI-powered GitHub automation CLI for code reviews, issue labeling, and documentation sync.
+AI-powered GitHub automation workflows as an OpenCode plugin. Provides agents for code reviews, issue labeling, documentation sync, and release notes.
 
 Powered by [OpenCode](https://opencode.ai).
 
 ## Installation
 
-```bash
-# Use directly with npx (recommended)
-npx @activadee-ai/open-workflows <command>
+Add the plugin to your `opencode.json`:
 
-# Or install globally
-bun install -g @activadee-ai/open-workflows
+```json
+{
+  "plugin": ["@activadee-ai/open-workflows"]
+}
 ```
 
-## Commands
-
-### Initialize Workflows
-
-Set up GitHub Actions workflows in your repository:
+Then install and set up workflows:
 
 ```bash
-# Interactive mode (recommended)
-npx @activadee-ai/open-workflows init
-
-# Select specific workflows
-npx @activadee-ai/open-workflows init --select doc-sync --select label
-
-# Skip specific workflows
-npx @activadee-ai/open-workflows init --skip release
-
-# Install all workflows
-npx @activadee-ai/open-workflows init --all
-
-# Preview without making changes
-npx @activadee-ai/open-workflows init --dry-run
+bun add -d @activadee-ai/open-workflows
 ```
 
-### Review a PR
+Ask OpenCode to set up the workflows:
+
+```
+> Set up PR review and issue labeling workflows
+```
+
+OpenCode will use the `setup_workflows` tool to create the GitHub Action files.
+
+## What You Get
+
+### Agents
+
+| Agent | Description | Trigger |
+|-------|-------------|---------|
+| `review` | AI-powered PR code review | Pull request opened/updated |
+| `label` | Automatic issue labeling | Issue opened/edited |
+| `doc-sync` | Keep docs in sync with code | PR with code changes |
+| `release` | Generate release notes | Release created |
+
+### Tools
+
+| Tool | Description |
+|------|-------------|
+| `submit_review` | Posts PR review with inline comments to GitHub |
+| `apply_labels` | Applies labels to GitHub issues |
+| `commit_docs` | Commits documentation updates to the PR branch |
+| `setup_workflows` | Creates GitHub Actions workflow files |
+
+## GitHub Actions Setup
+
+After setting up workflows, add your API key as a repository secret:
 
 ```bash
-# In GitHub Actions (auto-detects PR)
-npx @activadee-ai/open-workflows review
-
-# Review specific PR
-npx @activadee-ai/open-workflows review --pr 123 --repo owner/repo
-
-# Review local changes
-npx @activadee-ai/open-workflows review --local
-
-# Preview without posting
-npx @activadee-ai/open-workflows review --dry-run
+gh secret set ANTHROPIC_API_KEY -b"your-key"
 ```
 
-### Label an Issue
+Then commit and push the workflow files.
 
-```bash
-# In GitHub Actions (auto-detects issue)
-npx @activadee-ai/open-workflows label
+## How It Works
 
-# Label specific issue
-npx @activadee-ai/open-workflows label --issue 456 --repo owner/repo
-
-# Preview without applying
-npx @activadee-ai/open-workflows label --dry-run
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  opencode.json                                                  │
+│  { "plugin": ["@activadee-ai/open-workflows"] }                │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Plugin provides:                                               │
+│  ├── Agents: review, label, doc-sync, release                  │
+│  └── Tools: submit_review, apply_labels, commit_docs,          │
+│             setup_workflows                                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+          "Set up workflows"  │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  .github/workflows/                                             │
+│  ├── pr-review.yml          # Triggers on PR events            │
+│  ├── issue-label.yml        # Triggers on issue events         │
+│  ├── doc-sync.yml           # Triggers on PR code changes      │
+│  └── release.yml            # Triggers on releases             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  GitHub Actions runs:                                           │
+│  opencode run --agent review "Review PR #123"                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Sync Documentation
+## Customization
 
-```bash
-# In GitHub Actions
-npx @activadee-ai/open-workflows doc-sync
+### Change Model
 
-# For local changes
-npx @activadee-ai/open-workflows doc-sync --local
+The agents use `minimax/MiniMax-M2.1` by default. Override in your `opencode.json`:
 
-# Preview without committing
-npx @activadee-ai/open-workflows doc-sync --dry-run
+```json
+{
+  "plugin": ["@activadee-ai/open-workflows"],
+  "agent": {
+    "review": {
+      "model": "openai/gpt-4o"
+    }
+  }
+}
 ```
 
-### Interactive Mode
+### Modify Agent Behavior
 
-Handles `/oc` and `/opencode` slash commands from GitHub comments.
+Override agent prompts in your `opencode.json`:
 
-```bash
-# Only works in GitHub Actions
-npx @activadee-ai/open-workflows interactive
-```
-
-### Manage Releases
-
-Analyzes commits and automatically bumps versions when worth releasing.
-
-```bash
-# In GitHub Actions (triggers on release created)
-npx @activadee-ai/open-workflows release
-
-# Dry run to see what version bump would be
-npx @activadee-ai/open-workflows release --dry-run
-```
-
-## GitHub Actions Usage
-
-### PR Review
-
-```yaml
-name: PR Review
-
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - run: npx @activadee-ai/open-workflows review
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-```
-
-### Issue Labeling
-
-```yaml
-name: Issue Label
-
-on:
-  issues:
-    types: [opened, edited]
-
-jobs:
-  label:
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    steps:
-      - uses: actions/checkout@v4
-      - run: npx @activadee-ai/open-workflows label
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-```
-
-### Doc Sync
-
-```yaml
-name: Doc Sync
-
-on:
-  pull_request:
-    types: [opened, synchronize]
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - run: npx @activadee-ai/open-workflows doc-sync
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-```
-
-### Interactive (Slash Commands)
-
-```yaml
-name: OpenCode
-
-on:
-  issue_comment:
-    types: [created]
-  pull_request_review_comment:
-    types: [created]
-
-jobs:
-  opencode:
-    if: contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-    steps:
-      - uses: actions/checkout@v4
-      - run: npx @activadee-ai/open-workflows interactive
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-```
-
-### Release
-
-```yaml
-name: Release
-
-on:
-  release:
-    types: [created]
-
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - run: npx @activadee-ai/open-workflows release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-```
-
-## Options
-
-| Option | Description |
-|--------|-------------|
-| `--pr <number>` | PR number to review |
-| `--issue <number>` | Issue number to label |
-| `--repo <owner/repo>` | Repository |
-| `--model <model>` | AI model (default: `minimax/MiniMax-M2.1`) |
-| `--local` | Use local git changes |
-| `--dry-run` | Preview without posting/committing |
-| `--verbose` | Detailed output |
-| `--select <workflow>` | Select workflow for init (can be used multiple times) |
-| `--skip <workflow>` | Skip workflow for init (can be used multiple times) |
-| `--all` | Select all workflows for init |
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GITHUB_TOKEN` | Yes (in CI) | GitHub authentication token |
-| `MINIMAX_API_KEY` | Yes | MiniMax API key for AI |
-
-## Local Usage
-
-The CLI works locally too! You need:
-
-1. `gh` CLI installed and authenticated (`gh auth login`)
-2. `MINIMAX_API_KEY` environment variable set
-
-```bash
-# Export your API key
-export MINIMAX_API_KEY=your-key-here
-
-# Review a PR from your terminal
-npx @activadee-ai/open-workflows review --pr 123 --repo owner/repo
-
-# Review local uncommitted changes
-npx @activadee-ai/open-workflows review --local
+```json
+{
+  "plugin": ["@activadee-ai/open-workflows"],
+  "agent": {
+    "review": {
+      "prompt": "You are a code reviewer. Focus on security issues only."
+    }
+  }
+}
 ```
 
 ## Requirements
 
-- Node.js 18+
-- GitHub CLI (`gh`) for GitHub operations
-- OpenCode CLI (auto-installed if missing)
+- Bun (latest recommended)
+- OpenCode CLI
+- GitHub repository with Actions enabled
 
 ## License
 

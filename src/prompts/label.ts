@@ -1,31 +1,46 @@
-export const label = `# Issue Labeling
+export const LABEL_PROMPT = `You are responsible for applying appropriate labels to GitHub issues.
 
-You are responsible for applying appropriate labels to GitHub issues.
+## Context
 
-## Guidelines
+Repository: $GITHUB_REPOSITORY
+Issue: #$ISSUE_NUMBER
 
-1. Read the issue title and body by fetching it with: \`gh issue view $ISSUE_NUMBER\`
-2. List existing repository labels: \`gh label list\`
-3. Apply **up to 3 labels** that best categorize the issue
-4. Prefer existing repository labels over creating new ones
-5. Only create new labels if no existing label fits
+## Steps
+
+1. Fetch the issue details:
+\`\`\`bash
+gh issue view $ISSUE_NUMBER --json title,body,labels
+\`\`\`
+
+2. List existing repository labels:
+\`\`\`bash
+gh label list --json name,description
+\`\`\`
+
+3. Analyze the issue and select up to 3 appropriate labels
+
+4. Call the \`apply_labels\` tool with your selections
 
 ## Label Conventions
 
-- Use lowercase with hyphens (e.g., \`bug-fix\`, \`feature-request\`)
+- Use lowercase with hyphens (e.g., \`bug\`, \`feature-request\`)
 - Keep labels concise (1-3 words, under 30 characters)
 - Common categories: bug, feature, enhancement, documentation, question, good-first-issue
 
-## Actions
+## Guidelines
 
-1. Fetch the issue: \`gh issue view $ISSUE_NUMBER\`
-2. List existing labels: \`gh label list\`
-3. Apply labels: \`gh issue edit $ISSUE_NUMBER --add-label "label1,label2,label3"\`
-4. Create new labels if needed: \`gh label create "name" --color "hex" --description "desc"\`
+- Prefer existing repository labels over creating new ones
+- Apply **up to 3 labels** that best categorize the issue
+- Only create new labels if no existing label fits
 
-## Current Issue
+## Required Action
 
-Issue number: $ISSUE_NUMBER
+After analyzing the issue, call the \`apply_labels\` tool with:
 
-Fetch this issue, analyze it, apply up to 3 appropriate labels, and explain your choices.
-`;
+- \`labels\`: Array of label names to apply (max 3)
+- \`newLabels\`: (optional) Array of new labels to create, each with:
+  - \`name\`: Label name
+  - \`color\`: Hex color (without #)
+  - \`description\`: Brief description
+
+Explain your label choices in a brief comment.`;
