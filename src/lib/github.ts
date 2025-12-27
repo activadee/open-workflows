@@ -220,16 +220,17 @@ export function checkGhPermissions(): GhPermissionStatus {
     tokenScopes: [],
   };
 
-  try {
-    execSync('gh auth status', { stdio: 'ignore' });
-    status.authenticated = true;
-  } catch {
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    status.authenticated = !!(process.env.GITHUB_TOKEN || process.env.GH_TOKEN);
+    status.hasPullRequestWrite = true;
+    status.hasIssuesWrite = true;
+    status.hasContentsWrite = true;
     return status;
   }
 
   try {
-    const userJson = execSync('gh api user --jq ".login"', { encoding: 'utf-8' });
-    status.authenticated = !!userJson.trim();
+    execSync('gh auth status', { stdio: 'ignore' });
+    status.authenticated = true;
   } catch {
     return status;
   }
