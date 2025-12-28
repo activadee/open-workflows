@@ -1,0 +1,62 @@
+import type { Hooks } from '@opencode-ai/plugin';
+
+import { DOC_SYNC_PROMPT } from '../prompts/doc-sync';
+import { LABEL_PROMPT } from '../prompts/label';
+import { RELEASE_PROMPT } from '../prompts/release';
+import { REVIEW_PROMPT } from '../prompts/review';
+
+const DEFAULT_MODEL = 'minimax/MiniMax-M2.1';
+
+const BASE_TOOLS = {
+  bash: true,
+  read: true,
+  glob: true,
+  grep: true,
+  write: false,
+  edit: false,
+} as const;
+
+export const configureAgents: NonNullable<Hooks['config']> = async (cfg) => {
+  cfg.agent = {
+    ...cfg.agent,
+    review: {
+      description: 'AI-powered pull request code review',
+      mode: 'primary',
+      model: DEFAULT_MODEL,
+      prompt: REVIEW_PROMPT,
+      tools: {
+        ...BASE_TOOLS,
+        submit_review: true,
+      },
+    },
+    label: {
+      description: 'Automatically label GitHub issues',
+      mode: 'primary',
+      model: DEFAULT_MODEL,
+      prompt: LABEL_PROMPT,
+      tools: {
+        ...BASE_TOOLS,
+        apply_labels: true,
+      },
+    },
+    'doc-sync': {
+      description: 'Sync documentation with code changes',
+      mode: 'primary',
+      model: DEFAULT_MODEL,
+      prompt: DOC_SYNC_PROMPT,
+      tools: {
+        ...BASE_TOOLS,
+        write: true,
+        edit: true,
+        commit_docs: true,
+      },
+    },
+    release: {
+      description: 'Generate release notes from commits',
+      mode: 'subagent' as const,
+      model: DEFAULT_MODEL,
+      prompt: RELEASE_PROMPT,
+      tools: BASE_TOOLS,
+    },
+  };
+};

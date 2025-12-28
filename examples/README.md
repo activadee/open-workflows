@@ -1,6 +1,22 @@
 # Example GitHub Actions Workflows
 
-These are minimal examples showing how to use the `@activadee-ai/open-workflows` CLI in your repository.
+These are minimal examples showing how to use the `@activadee-ai/open-workflows` **OpenCode plugin** in your repository.
+
+## Prerequisites
+
+1. Add the plugin to your `opencode.json`:
+
+```json
+{
+  "plugin": ["@activadee-ai/open-workflows"]
+}
+```
+
+1. Add your model provider key (default: Anthropic) as a GitHub Actions secret:
+
+```bash
+gh secret set MINIMAX_API_KEY -b"your-key"
+```
 
 ## PR Review
 
@@ -21,10 +37,19 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx @activadee-ai/open-workflows review
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install OpenCode
+        run: bun add -g opencode-ai
+
+      - name: Review PR
+        run: opencode run --agent review "Review PR ${{ github.event.pull_request.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
 ```
 
 ## Issue Labeling
@@ -45,10 +70,18 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx @activadee-ai/open-workflows label
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install OpenCode
+        run: bun add -g opencode-ai
+
+      - name: Label Issue
+        run: opencode run --agent label "Label issue ${{ github.event.issue.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
 ```
 
 ## Doc Sync
@@ -71,40 +104,72 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-      - run: |
+
+      - name: Configure Git
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - run: npx @activadee-ai/open-workflows doc-sync
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install OpenCode
+        run: bun add -g opencode-ai
+
+      - name: Sync Documentation
+        run: opencode run --agent doc-sync "Sync documentation for PR ${{ github.event.pull_request.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
 ```
 
-## Interactive (Slash Commands)
+## Release Notes
 
-Create `.github/workflows/opencode.yml`:
+Create `.github/workflows/release.yml`:
 
 ```yaml
-name: OpenCode
+name: Release
 
 on:
-  issue_comment:
-    types: [created]
-  pull_request_review_comment:
+  release:
     types: [created]
 
 jobs:
-  opencode:
-    if: contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
-      issues: write
     steps:
       - uses: actions/checkout@v4
-      - run: npx @activadee-ai/open-workflows interactive
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install OpenCode
+        run: bun add -g opencode-ai
+
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          PREV=$(git describe --tags --abbrev=0 ${{ github.event.release.tag_name }}^ 2>/dev/null || echo "")
+          echo "tag=$PREV" >> $GITHUB_OUTPUT
+
+      - name: Generate Release Notes
+        id: notes
+        run: |
+          NOTES=$(opencode run --agent release "Generate release notes for ${{ github.event.release.tag_name }}" 2>&1)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          PREVIOUS_TAG: ${{ steps.prev_tag.outputs.tag }}
+
+      - name: Update Release Body
+        run: gh release edit ${{ github.event.release.tag_name }} --notes "${{ steps.notes.outputs.notes }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
