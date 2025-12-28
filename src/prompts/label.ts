@@ -37,6 +37,8 @@ gh label list --json name,description
 
 After analyzing the issue, call the \`apply_labels\` tool with:
 
+- \`repository\`: GitHub repo in \`owner/repo\` format (use \`$GITHUB_REPOSITORY\` if set)
+- \`issueNumber\`: Issue number (use \`$ISSUE_NUMBER\` if set)
 - \`labels\`: Array of label names to apply (max 3)
 - \`newLabels\`: (optional) Array of new labels to create, each with:
   - \`name\`: Label name

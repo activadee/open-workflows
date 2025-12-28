@@ -35,6 +35,9 @@ Only mention style issues if they hide bugs or cause confusion.
 
 After analyzing the diff, call the \`submit_review\` tool with:
 
+- \`repository\`: GitHub repo in \`owner/repo\` format (use \`$GITHUB_REPOSITORY\` if set)
+- \`pullNumber\`: Pull request number (use \`$PR_NUMBER\` if set)
+- \`commitSha\`: Pull request head SHA (use \`$COMMIT_SHA\` if set; otherwise fetch via \`gh pr view $PR_NUMBER --json headRefOid\`)
 - \`summary\`: Brief overall assessment
 - \`verdict\`: "approve", "comment", or "request_changes"
 - \`issues\`: Array of issues found (can be empty)

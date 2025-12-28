@@ -24,14 +24,20 @@ export const configureAgents: NonNullable<Hooks['config']> = async (cfg) => {
       mode: 'primary',
       model: DEFAULT_MODEL,
       prompt: REVIEW_PROMPT,
-      tools: BASE_TOOLS,
+      tools: {
+        ...BASE_TOOLS,
+        submit_review: true,
+      },
     },
     label: {
       description: 'Automatically label GitHub issues',
       mode: 'primary',
       model: DEFAULT_MODEL,
       prompt: LABEL_PROMPT,
-      tools: BASE_TOOLS,
+      tools: {
+        ...BASE_TOOLS,
+        apply_labels: true,
+      },
     },
     'doc-sync': {
       description: 'Sync documentation with code changes',
@@ -42,6 +48,7 @@ export const configureAgents: NonNullable<Hooks['config']> = async (cfg) => {
         ...BASE_TOOLS,
         write: true,
         edit: true,
+        commit_docs: true,
       },
     },
     release: {

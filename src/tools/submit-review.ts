@@ -51,6 +51,12 @@ function buildStickyCommentBody(summary: string, issues: ReviewIssue[], commitSh
 export const submitReviewTool: ToolDefinition = tool({
   description: 'Submit the code review and post comments to GitHub PR.',
   args: {
+    repository: tool.schema
+      .string()
+      .regex(/^[^/]+\/[^/]+$/)
+      .describe('GitHub repository in owner/repo format'),
+    pullNumber: tool.schema.number().int().positive().describe('Pull request number'),
+    commitSha: tool.schema.string().min(7).describe('Head commit SHA for the pull request'),
     summary: tool.schema.string().describe('Brief overall assessment of the changes'),
     verdict: tool.schema.enum(['approve', 'comment', 'request_changes']).describe('Review verdict'),
     issues: tool.schema
@@ -71,44 +77,36 @@ export const submitReviewTool: ToolDefinition = tool({
       .describe('Use a single sticky comment instead of inline comments'),
   },
   async execute(args) {
-    const { summary, verdict, issues, stickyComment } = args;
-
-    const repo = process.env.GITHUB_REPOSITORY;
-    const prNumber = parseInt(process.env.PR_NUMBER || '', 10);
-    const commitSha = process.env.COMMIT_SHA || '';
-
-    if (!repo) throw new Error('GITHUB_REPOSITORY environment variable is required');
-    if (!prNumber) throw new Error('PR_NUMBER environment variable is required');
-    if (!commitSha) throw new Error('COMMIT_SHA environment variable is required');
+    const { repository, pullNumber, commitSha, summary, verdict, issues, stickyComment } = args;
 
     if (stickyComment) {
       const body = buildStickyCommentBody(summary, issues as ReviewIssue[], commitSha);
       let existingCommentId: number | null = null;
       try {
-        const commentsJson = execSync(`gh api /repos/${repo}/issues/${prNumber}/comments --paginate`, {
+        const commentsJson = execSync(`gh api /repos/${repository}/issues/${pullNumber}/comments --paginate`, {
           encoding: 'utf-8',
         });
         const comments = JSON.parse(commentsJson) as Array<{ id: number; body: string }>;
         const existing = comments.find((c) => c.body.includes(STICKY_MARKER));
         if (existing) existingCommentId = existing.id;
       } catch {
-        // Ignore
+        existingCommentId = null;
       }
 
       const payload = JSON.stringify({ body });
       if (existingCommentId) {
-        execSync(`gh api --method PATCH /repos/${repo}/issues/comments/${existingCommentId} --input -`, {
+        execSync(`gh api --method PATCH /repos/${repository}/issues/comments/${existingCommentId} --input -`, {
           encoding: 'utf-8',
           input: payload,
         });
         return 'Updated existing review comment';
-      } else {
-        execSync(`gh api --method POST /repos/${repo}/issues/${prNumber}/comments --input -`, {
-          encoding: 'utf-8',
-          input: payload,
-        });
-        return 'Posted review comment';
       }
+
+      execSync(`gh api --method POST /repos/${repository}/issues/${pullNumber}/comments --input -`, {
+        encoding: 'utf-8',
+        input: payload,
+      });
+      return 'Posted review comment';
     }
 
     const event =
@@ -129,7 +127,7 @@ export const submitReviewTool: ToolDefinition = tool({
     };
 
     execSync(
-      `gh api --method POST -H "Accept: application/vnd.github+json" /repos/${repo}/pulls/${prNumber}/reviews --input -`,
+      `gh api --method POST -H "Accept: application/vnd.github+json" /repos/${repository}/pulls/${pullNumber}/reviews --input -`,
       { encoding: 'utf-8', input: JSON.stringify(payload) }
     );
 
