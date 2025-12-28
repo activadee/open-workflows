@@ -4,7 +4,18 @@ AI-powered GitHub automation workflows as an OpenCode plugin. Provides agents fo
 
 Powered by [OpenCode](https://opencode.ai).
 
-## Installation
+## Quick Start (CLI)
+
+Install the CLI and run the interactive installer:
+
+```bash
+bun add -d @activadee-ai/open-workflows
+npx open-workflows
+```
+
+The CLI will prompt you to select which workflows to install and automatically sets up the configuration.
+
+## Plugin Installation
 
 Add the plugin to your `opencode.json`:
 
@@ -13,6 +24,13 @@ Add the plugin to your `opencode.json`:
   "plugin": ["@activadee-ai/open-workflows"]
 }
 ```
+
+## Available Workflows
+
+- **PR Review** - AI-powered code reviews on pull requests
+- **Issue Label** - Auto-label issues based on content
+- **Doc Sync** - Keep documentation in sync with code changes
+- **Release Notes** - Generate release notes automatically
 
 ## GitHub Actions Setup
 

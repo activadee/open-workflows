@@ -36,7 +36,20 @@ gh secret set MINIMAX_API_KEY -b"your-key"
 
 ## 4) Install workflow files
 
-### Option A: Ask OpenCode to install (recommended)
+### Option A: CLI Installer (recommended)
+
+Run the interactive installer to select and configure workflows:
+
+```bash
+npx open-workflows
+```
+
+The CLI will:
+1. Prompt you to select which workflows to install
+2. Create the workflow files in `.github/workflows/`
+3. Create or update `.opencode/opencode.json` with the plugin configuration
+
+### Option B: Ask OpenCode to install
 
 In an OpenCode session, ask:
 
@@ -46,7 +59,7 @@ Set up PR review and issue labeling workflows
 
 OpenCode will use the `setup_workflows` tool (from this plugin) to generate the `.github/workflows/*.yml` files.
 
-### Option B: Copy examples
+### Option C: Copy examples
 
 If you prefer manual setup, copy the examples from `examples/README.md` into your repository.
 
