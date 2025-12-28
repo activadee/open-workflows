@@ -1,54 +1,55 @@
 {
-    "name": "@activadee-ai/open-workflows",
-    "version": "1.7.0",
-    "description": "AI-powered GitHub automation CLI - PR reviews, issue labeling, and doc sync",
-    "keywords": [
-        "github",
-        "opencode",
-        "ai",
-        "code-review",
-        "automation",
-        "cli"
-    ],
-    "author": "activadee",
-    "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/activadee/open-workflows.git"
-    },
-    "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "bin": {
-        "open-workflows": "dist/bin/cli.js"
-    },
-    "files": [
-        "dist",
-        "README.md",
-        "LICENSE"
-    ],
-    "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
-        "typecheck": "tsc --noEmit",
-        "test": "vitest",
-        "test:run": "vitest run",
-        "prepublishOnly": "bun run build"
-    },
-    "dependencies": {
-        "@opencode-ai/sdk": "^1.0.0",
-        "commander": "^14.0.2",
-        "picocolors": "^1.1.0"
-    },
-    "devDependencies": {
-        "@types/node": "^25.0.3",
-        "@vitest/coverage-v8": "^4.0.16",
-        "@vitest/ui": "^4.0.16",
-        "tsup": "^8.3.0",
-        "typescript": "^5.6.0",
-        "vitest": "^4.0.16"
-    },
-    "engines": {
-        "node": ">=18.0.0"
+  "name": "@activadee-ai/open-workflows",
+  "version": "2.0.0-alpha.16",
+  "description": "OpenCode plugin for AI-powered GitHub workflows: PR reviews, issue labeling, doc sync, and releases",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "github",
+    "ai",
+    "code-review",
+    "automation",
+    "pr-review",
+    "issue-labeling"
+  ],
+  "author": "activadee",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/activadee/open-workflows.git"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "bun run clean && bun build src/index.ts --outdir dist --target bun --format esm -e @opencode-ai/plugin -e @opencode-ai/plugin/tool --minify && bun x tsc --declaration --emitDeclarationOnly --outDir dist",
+    "dev": "bun run build --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "bun run build && bun test",
+    "prepublishOnly": "bun run clean && bun run build && bun run typecheck"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.0.204",
+    "zod": "~4.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "bun-types": "latest",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

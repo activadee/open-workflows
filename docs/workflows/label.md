@@ -1,19 +1,20 @@
 # Label Workflow
 
-The `opencode-label.yml` workflow automatically applies labels to GitHub issues using AI.
+The `label` agent automatically applies labels to GitHub issues using AI.
 
 ## Overview
 
 When an issue is opened or edited, this workflow:
 1. Checks out the repository
-2. Loads the labeling prompt from this repository
-3. Runs OpenCode to analyze the issue
-4. Applies appropriate labels to the issue
+2. Sets up Bun runtime
+3. Runs the OpenCode label agent to analyze the issue
+4. Applies appropriate labels to the issue using the `apply_labels` tool
 
 ## Usage
 
+Create `.github/workflows/issue-label.yml`:
+
 ```yaml
-# .github/workflows/issue-label.yml
 name: Issue Label
 
 on:
@@ -22,22 +23,28 @@ on:
 
 jobs:
   label:
-    uses: activadee/opencode-shared-workflows/.github/workflows/opencode-label.yml@main
-    secrets: inherit
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Label Issue
+        run: bunx opencode-ai run --agent label "Label issue ${{ github.event.issue.number }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
 ```
 
-## Inputs
+## Environment Variables
 
-| Input | Type | Default | Description |
-|-------|------|---------|-------------|
-| `model` | string | `minimax/MiniMax-M2.1` | AI model to use |
-| `fallback_model` | string | `opencode/big-pickle` | Fallback model |
-
-## Secrets
-
-| Secret | Required | Description |
-|--------|----------|-------------|
-| `MINIMAX_API_KEY` | Yes | MiniMax API key |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GITHUB_TOKEN` | Yes | GitHub authentication token |
+| `MINIMAX_API_KEY` | Yes | MiniMax API key for AI |
 
 ## Behavior
 
@@ -53,19 +60,6 @@ The label workflow:
 - **Format**: lowercase with hyphens (e.g., `bug-fix`, `feature-request`)
 - **Length**: 1-3 words, under 30 characters
 - **Common categories**: bug, feature, enhancement, documentation, question, good-first-issue
-
-## Customization
-
-### Using a Different Model
-
-```yaml
-jobs:
-  label:
-    uses: activadee/opencode-shared-workflows/.github/workflows/opencode-label.yml@main
-    secrets: inherit
-    with:
-      model: opencode/big-pickle
-```
 
 ## How It Works
 

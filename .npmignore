@@ -2,7 +2,6 @@
 src/
 bin/
 tsconfig.json
-tsup.config.ts
 
 # Development
 .github/

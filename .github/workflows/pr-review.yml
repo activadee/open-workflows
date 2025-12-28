@@ -11,8 +11,14 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - run: npx -y @activadee-ai/open-workflows@latest review
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Review PR
+        run: bunx opencode-ai run --agent review "Review PR ${{ github.event.pull_request.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}

@@ -10,8 +10,13 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/checkout@v4
-      - run: npx -y @activadee-ai/open-workflows@latest label
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Label Issue
+        run: bunx opencode-ai run --agent label "Label issue ${{ github.event.issue.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}

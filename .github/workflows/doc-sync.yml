@@ -10,13 +10,20 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.head_ref }}
-      - run: |
+
+      - name: Configure Git
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - run: npx -y @activadee-ai/open-workflows@latest doc-sync
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Sync Documentation
+        run: bunx opencode-ai run --agent doc-sync "Sync documentation for PR ${{ github.event.pull_request.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}

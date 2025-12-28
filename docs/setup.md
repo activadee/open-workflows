@@ -1,155 +1,58 @@
 # Setup Guide
 
-This guide walks you through setting up OpenCode Shared Workflows in your repository.
+This guide walks you through setting up `@activadee-ai/open-workflows` in your repository.
 
 ## Prerequisites
 
-- A GitHub repository
-- Repository admin access (to install GitHub App and add secrets)
-- A [Z.AI Coding Plan](https://z.ai/subscribe) subscription (for the API key)
+- GitHub repository with Actions enabled
+- OpenCode CLI (installed in CI by the workflow files)
+- A model provider API key (default: MiniMax)
 
-## Step 1: Install the OpenCode GitHub App
-
-1. Visit https://github.com/apps/opencode-agent
-2. Click **Install**
-3. Select the repository (or repositories) where you want to use OpenCode
-4. Authorize the app
-
-The GitHub App enables OpenCode to interact with issues, pull requests, and comments on your behalf.
-
-## Step 2: Add Your API Key
-
-1. Get your API key from [Z.AI](https://z.ai/subscribe)
-2. Go to your repository's **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret**
-4. Name: `MINIMAX_API_KEY`
-5. Value: Your MiniMax API key
-6. Click **Add secret**
-
-## Step 3: Create Workflow Files
-
-Create the workflow files you need in your repository's `.github/workflows/` directory.
-
-### Option A: Quick Setup (Recommended)
-
-Use the `init` command to automatically create workflow files:
+## 1) Install the plugin (Bun)
 
 ```bash
-# Interactive mode
-npx @activadee-ai/open-workflows init
-
-# Select specific workflows
-npx @activadee-ai/open-workflows init --select doc-sync --select label --select review
-
-# Install all workflows
-npx @activadee-ai/open-workflows init --all
-
-# Preview without making changes
-npx @activadee-ai/open-workflows init --dry-run
+bun add -d @activadee-ai/open-workflows
 ```
 
-### Option B: All-in-One Setup
+## 2) Configure OpenCode
 
-Create a single file that imports all workflows:
+Create `opencode.json` at your repo root:
 
-```yaml
-# .github/workflows/opencode.yml
-name: OpenCode
-
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-  issues:
-    types: [opened, edited]
-  issue_comment:
-    types: [created]
-  pull_request_review_comment:
-    types: [created]
-
-jobs:
-  review:
-    if: github.event_name == 'pull_request'
-    uses: activadee/opencode-shared-workflows/.github/workflows/opencode-review.yml@main
-    secrets: inherit
-
-  label:
-    if: github.event_name == 'issues'
-    uses: activadee/opencode-shared-workflows/.github/workflows/opencode-label.yml@main
-    secrets: inherit
-
-  doc-sync:
-    if: github.event_name == 'pull_request'
-    uses: activadee/opencode-shared-workflows/.github/workflows/opencode-doc-sync.yml@main
-    secrets: inherit
-
-  interactive:
-    if: github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment'
-    uses: activadee/opencode-shared-workflows/.github/workflows/opencode-interactive.yml@main
-    secrets: inherit
+```json
+{
+  "plugin": ["@activadee-ai/open-workflows"]
+}
 ```
 
-### Option C: Individual Workflow Files
+Optional: override the model per-agent in `opencode.json`.
 
-Create separate files for each workflow (recommended for more control):
+## 3) Add GitHub Secrets
 
-See the [README](../README.md) for individual workflow examples.
+Add your API key as a GitHub Actions secret:
 
-## Step 4: Verify Setup
-
-1. Create a test issue in your repository
-2. Comment `/oc explain this issue`
-3. OpenCode should respond within a few minutes
-
-If you encounter issues:
-- Check the **Actions** tab for workflow run logs
-- Verify the `MINIMAX_API_KEY` secret is correctly set
-- Ensure the OpenCode GitHub App is installed on the repository
-
-## Configuration Options
-
-### Using a Different Model
-
-Override the default model by passing the `model` input:
-
-```yaml
-jobs:
-  review:
-    uses: activadee/opencode-shared-workflows/.github/workflows/opencode-review.yml@main
-    secrets: inherit
-    with:
-      model: opencode/big-pickle  # Use the free OpenCode model
+```bash
+gh secret set MINIMAX_API_KEY -b"your-key"
 ```
 
-### Available Models
+## 4) Install workflow files
 
-| Model | Provider | Context | Notes |
-|-------|----------|---------|-------|
-| `minimax/MiniMax-M2.1` | MiniMax | 200K | Default |
-| `opencode/big-pickle` | OpenCode | 200K | Free, no API key needed |
+### Option A: Ask OpenCode to install (recommended)
 
-## Troubleshooting
+In an OpenCode session, ask:
 
-### Workflow not triggering
+```
+Set up PR review and issue labeling workflows
+```
 
-- Check that the OpenCode GitHub App is installed
-- Verify the workflow file is in `.github/workflows/`
-- Check the workflow's `on:` triggers match your event
+OpenCode will use the `setup_workflows` tool (from this plugin) to generate the `.github/workflows/*.yml` files.
 
-### API key errors
+### Option B: Copy examples
 
-- Ensure `MINIMAX_API_KEY` is set in repository secrets
-- Verify the API key is valid and has not expired
-- Check that `secrets: inherit` is included in the job
+If you prefer manual setup, copy the examples from `examples/README.md` into your repository.
 
-### OpenCode not responding to commands
+## 5) Verify
 
-- Ensure the comment contains `/oc` or `/opencode`
-- Check the Actions tab for workflow run errors
-- Verify the `opencode-interactive.yml` workflow is set up
+- Open a PR → the PR review workflow should run
+- Open or edit an issue → the issue labeling workflow should run
 
-## Next Steps
-
-- [Review Workflow Documentation](workflows/review.md)
-- [Label Workflow Documentation](workflows/label.md)
-- [Doc Sync Workflow Documentation](workflows/doc-sync.md)
-- [Release Workflow Documentation](workflows/release.md)
+If something fails, check the Actions logs and confirm the `MINIMAX_API_KEY` secret is set.
