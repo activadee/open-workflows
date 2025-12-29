@@ -79,8 +79,7 @@ jobs:
   'release': `name: Release
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
 
 jobs:
   release:
@@ -92,29 +91,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: Get previous tag
-        id: prev_tag
-        run: |
-          PREV=\$(git describe --tags --abbrev=0 \${{ github.event.release.tag_name }}^ 2>/dev/null || echo "")
-          echo "tag=\$PREV" >> \$GITHUB_OUTPUT
-
-      - name: Generate Release Notes
-        id: notes
-        run: |
-          NOTES=\$(bunx opencode-ai run --agent release "Generate release notes for \${{ github.event.release.tag_name }}" 2>&1)
-          echo "notes<<EOF" >> \$GITHUB_OUTPUT
-          echo "\$NOTES" >> \$GITHUB_OUTPUT
-          echo "EOF" >> \$GITHUB_OUTPUT
+      - name: Create Release
+        run: bunx opencode-ai run --agent release "Create a new release for \${{ github.repository }}"
         env:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: \${{ secrets.MINIMAX_API_KEY }}
-
-      - name: Update Release Body
-        run: gh release edit \${{ github.event.release.tag_name }} --notes "\${{ steps.notes.outputs.notes }}"
-        env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 `,
 } as const;

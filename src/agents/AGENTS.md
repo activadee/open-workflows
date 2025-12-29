@@ -50,4 +50,4 @@ export const {NAME}_PROMPT = `...`;  // Multi-line system prompt
 | review | `submit_review` | PR opened/synced |
 | label | `apply_labels` | Issue opened/edited |
 | doc-sync | `commit_docs` | PR opened/synced |
-| release | stdout (no tool) | Release created |
+| release | `bun_release`, `github_release` | Workflow_dispatch |

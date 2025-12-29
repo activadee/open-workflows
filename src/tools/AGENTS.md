@@ -8,7 +8,9 @@ Tool implementations for OpenCode plugin. Each tool = one GitHub API action.
 tools/
 ├── index.ts           # Exports all tools as { tool_name: ToolDefinition }
 ├── apply-labels/      # Label GitHub issues
+├── bun-release/       # Bump version, push tags, publish to npm
 ├── commit-docs/       # Commit doc changes to PR branch
+├── github-release/    # Create GitHub releases
 ├── setup-workflows/   # Install GitHub Actions workflows
 └── submit-review/     # Post review comments on PRs
 ```
@@ -52,6 +54,8 @@ export const {name}Tool: ToolDefinition = tool({
 | `apply_labels` | Label issues, create new labels | `Bun.$` + gh CLI |
 | `commit_docs` | Write files + commit to PR branch | `Bun.$` + git/gh |
 | `setup_workflows` | Install workflow YAML files | Node fs (sync) |
+| `github_release` | Create GitHub releases with notes | `Bun.$` + gh CLI |
+| `bun_release` | Bump version, push tags, publish to npm | `Bun.$` + bun/npm |
 
 ## UNIQUE: setup-workflows
 
