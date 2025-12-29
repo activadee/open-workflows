@@ -15,6 +15,11 @@ npx open-workflows
 
 The CLI will prompt you to select which workflows to install and automatically sets up the configuration.
 
+### CLI Flags
+
+- `--version`, `-v` - Display version information
+- `--help`, `-h` - Display usage instructions
+
 ## Plugin Installation
 
 Add the plugin to your `opencode.json`:
@@ -30,7 +35,7 @@ Add the plugin to your `opencode.json`:
 - **PR Review** - AI-powered code reviews on pull requests
 - **Issue Label** - Auto-label issues based on content
 - **Doc Sync** - Keep documentation in sync with code changes
-- **Release Notes** - Generate release notes automatically
+- **Release** - Generate release notes and publish to npm/GitHub
 
 ## GitHub Actions Setup
 

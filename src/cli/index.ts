@@ -10,9 +10,44 @@ import {
 
 // Read version from package.json
 const pkg = await import('../../package.json').catch(() => ({ version: 'unknown' }));
-const version = pkg.version;
+const cliVersion = pkg.version;
 
-p.intro(color.bgCyan(color.black(` @activadee-ai/open-workflows v${version} `)));
+// Get command line arguments
+const args = process.argv.slice(2);
+const isHelp = args.includes('--help') || args.includes('-h');
+const isVersion = args.includes('--version') || args.includes('-v');
+
+// Handle --version flag
+if (isVersion) {
+  console.log(`@activadee-ai/open-workflows v${cliVersion}`);
+  process.exit(0);
+}
+
+// Handle --help flag or no subcommand
+if (isHelp || args.length === 0) {
+  console.log(`@activadee-ai/open-workflows v${cliVersion}
+
+AI-powered GitHub automation workflows as an OpenCode plugin.
+
+USAGE
+  $ open-workflows [COMMAND]
+
+COMMANDS
+  install    Install and configure GitHub Actions workflows (default)
+
+WORKFLOWS
+  review     AI-powered code reviews on pull requests
+  label      Auto-label issues based on content
+  doc-sync   Keep documentation in sync with code changes
+  release    Generate release notes and publish to npm/GitHub
+
+For more information, visit: https://github.com/activadee/open-workflows
+`);
+  process.exit(0);
+}
+
+// Default: Run the interactive installer
+p.intro(color.bgCyan(color.black(` @activadee-ai/open-workflows v${cliVersion} `)));
 
 const results = await p.group(
   {
@@ -23,7 +58,7 @@ const results = await p.group(
           { value: 'review', label: 'PR Review', hint: 'AI-powered code reviews' },
           { value: 'label', label: 'Issue Label', hint: 'Auto-label issues' },
           { value: 'doc-sync', label: 'Doc Sync', hint: 'Keep docs in sync' },
-          { value: 'release', label: 'Release Notes', hint: 'Generate release notes' },
+          { value: 'release', label: 'Release', hint: 'Generate notes, publish to npm & create GitHub release' },
         ],
         required: true,
       }),
