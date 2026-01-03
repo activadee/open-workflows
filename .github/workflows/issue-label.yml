@@ -12,16 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore OpenCode auth
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.local/share/opencode/auth.json
-          key: opencode-auth
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Label Issue
-        run: bunx opencode-ai run --model anthropic/claude-haiku-4-5 "Load the issue-label skill and label issue ${{ github.event.issue.number }}"
+      - uses: ./actions/issue-label
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}

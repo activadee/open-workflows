@@ -13,16 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore OpenCode auth
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.local/share/opencode/auth.json
-          key: opencode-auth
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Review PR
-        run: bunx opencode-ai run --model anthropic/claude-sonnet-4-5 "Load the pr-review skill and review PR ${{ github.event.pull_request.number }}"
+      - uses: ./actions/pr-review
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}

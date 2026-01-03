@@ -9,26 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
-      - name: Restore OpenCode auth
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.local/share/opencode/auth.json
-          key: opencode-auth
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Sync Documentation
-        run: bunx opencode-ai run --model anthropic/claude-haiku-4-5 "Load the doc-sync skill and sync documentation for PR ${{ github.event.pull_request.number }}"
+      - uses: ./actions/doc-sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}

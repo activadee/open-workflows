@@ -1,4 +1,4 @@
-import { CACHE_RESTORE_STEP, ENV_API_KEY, ENV_OAUTH } from './shared';
+import { ENV_OPENCODE_AUTH, ENV_API_KEY } from './shared';
 
 export const ISSUE_LABEL = (useOAuth: boolean) => `name: Issue Label
 
@@ -13,11 +13,8 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
-${useOAuth ? CACHE_RESTORE_STEP : ''}
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
 
-      - name: Label Issue
-        run: bunx opencode-ai run --model anthropic/claude-haiku-4-5 "Load the issue-label skill and label issue \${{ github.event.issue.number }}"
-        env:${useOAuth ? ENV_OAUTH : ENV_API_KEY}
+      - uses: activadee/open-workflows/actions/issue-label@main
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}${useOAuth ? ENV_OPENCODE_AUTH : ENV_API_KEY}
 `;

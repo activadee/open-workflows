@@ -1,15 +1,12 @@
-export const PR_REVIEW = `---
+---
 name: pr-review
-description: AI-powered pull request code review focusing on correctness, security, stability, and maintainability. Posts structured findings via submit_review tool.
+description: AI-powered pull request code review focusing on correctness, security, stability, and maintainability.
 license: MIT
-metadata:
-  trigger: pull_request
-  tools: submit_review
 ---
 
 ## What I Do
 
-Review pull request changes systematically and post findings as a sticky PR comment using the \`submit_review\` tool. Focus on **real issues that matter** - bugs, security risks, and stability problems that would block a merge in a typical code review.
+Review pull request changes systematically and post findings as a sticky PR comment. Focus on **real issues that matter** - bugs, security risks, and stability problems that would block a merge in a typical code review.
 
 ## Review Philosophy
 
@@ -22,30 +19,30 @@ Review pull request changes systematically and post findings as a sticky PR comm
 ## Workflow
 
 1. **Check prior feedback**: Fetch existing PR comments to understand context
-   \`\`\`bash
+   ```bash
    gh pr view <number> --json comments --jq '.comments[].body'
-   \`\`\`
+   ```
 
 2. **Gather PR context**: Get PR metadata and changed files
-   \`\`\`bash
+   ```bash
    gh pr view <number> --json files,title,body,headRefOid
-   \`\`\`
+   ```
 
-3. **Create validation todo list**: Track previously-flagged issues (if any) using \`todowrite\`
+3. **Create validation todo list**: Track previously-flagged issues (if any) using `todowrite`
    - One item per prior issue: "Validate if [issue] was addressed"
    - One item per changed file for new review
 
 4. **Analyze each file**:
-   - Mark todo as \`in_progress\`
+   - Mark todo as `in_progress`
    - Read the file diff and surrounding context
    - Note ONLY issues that pass the "real issue" test (see Review Priorities)
-   - Mark todo as \`completed\`
+   - Mark todo as `completed`
 
 5. **Synthesize review**: After ALL files are analyzed, determine verdict and summary
    - Acknowledge addressed feedback from prior reviews
    - Only include NEW issues not previously identified
 
-6. **Submit**: Call \`submit_review\` exactly once with all findings
+6. **Post review**: Run the submit-review script (see Posting Review section)
 
 ## Review Priorities
 
@@ -112,9 +109,9 @@ Focus on these areas. Each includes concrete examples of what IS and ISN'T worth
 Before starting your review:
 
 1. **Fetch existing PR comments** to see prior feedback:
-   \`\`\`bash
+   ```bash
    gh pr view <number> --json comments,reviews --jq '.comments[].body, .reviews[].body'
-   \`\`\`
+   ```
 
 2. **If previous issues were flagged**:
    - Create a todo item for each: "Validate: [previous issue title]"
@@ -126,65 +123,79 @@ Before starting your review:
    - Only flag issues that are NEW or STILL UNRESOLVED
    - Don't re-flag the same issue in slightly different words
 
-## Using submit_review
+## Posting Review
 
-Call exactly once with these arguments:
+The script path is provided in your task message. Run the submit-review script:
 
-| Argument | Type | Description |
-|----------|------|-------------|
-| \`repository\` | string | owner/repo format (from git remote) |
-| \`pullNumber\` | number | PR number from task message |
-| \`commitSha\` | string | headRefOid from PR metadata |
-| \`summary\` | string | 1-3 sentence overall assessment |
-| \`verdict\` | string | \`approve\` or \`request_changes\` |
-| \`issues\` | array | List of findings |
+```bash
+bun "<script_path>/submit-review.ts" \
+  --repo "owner/repo" \
+  --pr 123 \
+  --commit "abc1234" \
+  --verdict "approve" \
+  --summary "Your overall assessment" \
+  --issues '[{"file":"src/foo.ts","line":42,"severity":"high","title":"Issue title","explanation":"Why this matters","suggestion":"Optional fix"}]'
+```
 
-Each issue in the array needs:
+### Arguments
 
-| Field | Type | Description |
-|-------|------|-------------|
-| \`file\` | string | File path from the diff |
-| \`line\` | number | Line number on the NEW (right) side |
-| \`severity\` | string | \`critical\`, \`high\`, \`medium\`, or \`low\` |
-| \`title\` | string | Short description (~80 chars) |
-| \`explanation\` | string | Why this matters, what's wrong |
-| \`suggestion\` | string? | Optional: replacement code only, no prose |
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `--repo` | Yes | Repository in owner/repo format |
+| `--pr` | Yes | Pull request number |
+| `--commit` | No | Commit SHA (first 7 chars shown in review) |
+| `--verdict` | Yes | `approve` or `request_changes` |
+| `--summary` | Yes | 1-3 sentence overall assessment |
+| `--issues` | No | JSON array of issues found |
+
+### Issue Format
+
+Each issue in the array:
+
+```json
+{
+  "file": "src/auth/login.ts",
+  "line": 42,
+  "severity": "critical|high|medium|low",
+  "title": "Short description (~80 chars)",
+  "explanation": "Why this matters, what's wrong",
+  "suggestion": "Optional: replacement code"
+}
+```
 
 ## Verdict Rules
 
-**Only use \`request_changes\` for issues that should BLOCK the merge:**
+**Only use `request_changes` for issues that should BLOCK the merge:**
 
-- \`critical\`: Security vulnerabilities, data loss risks, complete feature breakage
-- \`high\`: Bugs that will affect users, significant logic errors
-- \`medium\`: Edge cases likely to cause issues, unclear but problematic patterns
+- `critical`: Security vulnerabilities, data loss risks, complete feature breakage
+- `high`: Bugs that will affect users, significant logic errors
+- `medium`: Edge cases likely to cause issues, unclear but problematic patterns
 
-**Use \`approve\` generously:**
+**Use `approve` generously:**
 
-- If issues are \`low\` severity only - approve with notes
+- If issues are `low` severity only - approve with notes
 - If issues are style/preference-based - approve (and don't flag them)
 - If you're unsure whether something is a real issue - lean toward approve
 
 **Severity guidance:**
 
-- Default to \`low\` unless the issue clearly meets \`medium\` or higher criteria
-- \`medium\` = "This will probably cause a bug in production"
-- \`high\` = "This will definitely cause problems for users"
-- \`critical\` = "This is a security hole or will cause data loss"
+- Default to `low` unless the issue clearly meets `medium` or higher criteria
+- `medium` = "This will probably cause a bug in production"
+- `high` = "This will definitely cause problems for users"
+- `critical` = "This is a security hole or will cause data loss"
 
 ## Common Mistakes to Avoid
 
-- Do NOT call \`submit_review\` more than once
+- Do NOT run the script more than once per review
 - Do NOT use line numbers from the left (old) side of the diff
 - Do NOT skip the per-file todo workflow
 - Do NOT guess repository, PR number, or commit SHA - derive from git/gh commands
-- Do NOT include JSON fragments in summary or explanation fields
-- Do NOT put prose like "change to:" in the suggestion field
 - Do NOT re-flag issues from prior reviews that were already addressed
 - Do NOT flag style issues that linters or formatters should handle
 
 ## Example Issue
 
-\`\`\`json
+```json
 {
   "file": "src/auth/login.ts",
   "line": 42,
@@ -193,11 +204,11 @@ Each issue in the array needs:
   "explanation": "User input is concatenated directly into the SQL query without sanitization. An attacker could inject malicious SQL to bypass authentication or extract data.",
   "suggestion": "const user = await db.query('SELECT * FROM users WHERE email = $1', [email])"
 }
-\`\`\`
+```
 
 ## Example of What NOT to Flag
 
-\`\`\`typescript
+```typescript
 // DON'T flag: "Consider using optional chaining"
 const name = user.profile.name;  // If types guarantee profile exists, this is fine
 
@@ -209,5 +220,4 @@ function processOrder() { /* 80 lines */ }  // Unless there's a concrete bug
 
 // DON'T flag: "Consider adding error handling"
 await saveUser(user);  // Unless errors here would cause data loss
-\`\`\`
-`;
+```

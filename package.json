@@ -1,17 +1,16 @@
 {
   "name": "@activade/open-workflows",
-  "version": "1.1.0",
-  "description": "OpenCode plugin with skills for AI-powered GitHub workflows: PR reviews, issue labeling, doc sync, and releases",
+  "version": "2.0.0",
+  "description": "AI-powered GitHub automation workflows via composite actions",
   "keywords": [
-    "opencode",
-    "opencode-plugin",
-    "opencode-skills",
     "github",
+    "github-actions",
     "ai",
-    "code-review",
     "automation",
+    "code-review",
     "pr-review",
-    "issue-labeling"
+    "issue-labeling",
+    "opencode"
   ],
   "author": "activadee",
   "license": "MIT",
@@ -20,35 +19,26 @@
     "url": "git+https://github.com/activadee/open-workflows.git"
   },
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "bin": {
     "open-workflows": "./dist/cli/index.js"
   },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
   "files": [
     "dist",
+    "actions",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "bun run clean && bun build src/index.ts --outdir dist --target bun --format esm -e @opencode-ai/plugin -e @opencode-ai/plugin/tool --minify && bun build src/cli/index.ts --outdir dist/cli --target bun --format esm --minify && bun x tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "bun run clean && bun build src/cli/index.ts --outdir dist/cli --target bun --format esm --minify",
     "dev": "bun run build --watch",
     "typecheck": "tsc --noEmit",
-    "test": "bun run build && bun test",
+    "test": "bun test",
     "prepublishOnly": "bun run clean && bun run build && bun run typecheck"
   },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
-    "@opencode-ai/plugin": "^1.0.204",
-    "picocolors": "^1.1.1",
-    "zod": "~4.1.8"
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

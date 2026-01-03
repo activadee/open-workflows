@@ -1,45 +1,42 @@
-export const DOC_SYNC = `---
+---
 name: doc-sync
 description: Keep documentation in sync with code changes. Analyzes PR diffs and updates relevant docs using native write and bash tools.
 license: MIT
-metadata:
-  trigger: pull_request
-  tools: write, bash, read, glob
 ---
 
 ## What I Do
 
-Analyze pull request changes and update documentation to reflect code changes. Uses native OpenCode tools (\`write\`, \`bash\`) instead of custom commit tools.
+Analyze pull request changes and update documentation to reflect code changes. Uses native OpenCode tools (`write`, `bash`) for file operations and git commits.
 
 ## Workflow
 
 1. **Gather PR context**:
-   \`\`\`bash
+   ```bash
    gh pr view <number> --json files,title,body,headRefOid
-   \`\`\`
+   ```
 
-2. **Create todo list**: One item per changed file using \`todowrite\`
+2. **Create todo list**: One item per changed file using `todowrite`
 
 3. **Analyze each file**:
-   - Mark todo as \`in_progress\`
+   - Mark todo as `in_progress`
    - Identify user-visible changes (APIs, config, behavior)
    - Note which documentation might need updates
-   - Mark todo as \`completed\`
+   - Mark todo as `completed`
 
 4. **After ALL files analyzed**:
    - Identify affected documentation files
    - Read current content of each doc file
    - Plan minimal, precise updates
 
-5. **Update documentation**: Use \`write\` tool for each file needing changes
+5. **Update documentation**: Use `write` tool for each file needing changes
 
-6. **Commit and push**: Use \`bash\` tool for git operations
+6. **Commit and push**: Use `bash` tool for git operations
 
 ## Documentation Scope
 
 Check these locations first:
-- \`README.md\` at repository root
-- Files under \`docs/\` directory
+- `README.md` at repository root
+- Files under `docs/` directory
 - API documentation if present
 - Configuration examples
 - Other markdown files at root
@@ -56,15 +53,15 @@ Check these locations first:
 
 ## Committing Changes
 
-After updating documentation files with \`write\`, commit using \`bash\`:
+After updating documentation files with `write`, commit using `bash`:
 
-\`\`\`bash
+```bash
 git add README.md docs/
 git commit -m "[skip ci] docs: <description of changes>"
 git push
-\`\`\`
+```
 
-**Important**: The \`[skip ci]\` prefix prevents infinite workflow loops.
+**Important**: The `[skip ci]` prefix prevents infinite workflow loops.
 
 ## Style Guidelines
 
@@ -93,9 +90,8 @@ If the existing documentation is already accurate:
 
 ## Example Workflow
 
-1. PR changes \`src/config/options.ts\` to add new \`timeout\` option
+1. PR changes `src/config/options.ts` to add new `timeout` option
 2. Analyze: user-visible config change
-3. Check \`README.md\` and \`docs/configuration.md\`
-4. Update \`docs/configuration.md\` with new option description
-5. Commit: \`[skip ci] docs: add timeout configuration option\`
-`;
+3. Check `README.md` and `docs/configuration.md`
+4. Update `docs/configuration.md` with new option description
+5. Commit: `[skip ci] docs: add timeout configuration option`

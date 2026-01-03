@@ -1,104 +1,106 @@
 # PROJECT KNOWLEDGE BASE
 
-**Version:** 0.0.1
+**Version:** 2.0.0
 **Branch:** main
 
 ## OVERVIEW
 
-OpenCode plugin providing AI-powered GitHub automation workflows via **Skills**: PR reviews, issue labeling, documentation sync, and release notes generation. Uses Bun runtime + TypeScript.
+AI-powered GitHub automation workflows via composite actions. Provides PR reviews, issue labeling, documentation sync, and release automation. Uses Bun runtime + TypeScript.
 
 ## STRUCTURE
 
 ```
 open-workflows/
+├── actions/                    # Composite GitHub Actions
+│   ├── pr-review/
+│   │   ├── action.yml         # Action definition
+│   │   ├── skill.md           # AI instructions
+│   │   └── src/
+│   │       └── submit-review.ts
+│   ├── issue-label/
+│   │   ├── action.yml
+│   │   ├── skill.md
+│   │   └── src/
+│   │       └── apply-labels.ts
+│   ├── doc-sync/
+│   │   ├── action.yml
+│   │   └── skill.md
+│   └── release/
+│       ├── action.yml
+│       ├── skill.md
+│       └── src/
+│           ├── bun-release.ts
+│           └── github-release.ts
 ├── src/
-│   ├── index.ts        # Plugin export (tools + hooks)
-│   ├── cli/            # Interactive installer
-│   │   ├── index.ts    # CLI entry point
-│   │   ├── installer.ts # Installation logic
-│   │   └── templates/  # Workflow YAML templates
-│   │       ├── index.ts
-│   │       ├── shared.ts
-│   │       ├── auth.ts
-│   │       ├── pr-review.ts
-│   │       ├── issue-label.ts
-│   │       ├── doc-sync.ts
-│   │       └── release.ts
-│   ├── skills/         # Embedded skill content
-│   │   ├── index.ts    # Re-exports SKILLS object
-│   │   ├── pr-review.ts
-│   │   ├── issue-label.ts
-│   │   ├── doc-sync.ts
-│   │   └── release-notes.ts
-│   └── tools/          # Tool implementations
-│       ├── submit-review/
-│       ├── apply-labels/
-│       ├── github-release/
-│       ├── bun-release/
-│       └── utils/retry.ts
-├── .github/workflows/  # GitHub Actions
-├── docs/               # User documentation
-└── test/               # Plugin tests
+│   └── cli/                   # Workflow installer CLI
+│       ├── index.ts
+│       ├── installer.ts
+│       └── templates/
+├── .github/workflows/         # Dogfooding workflows
+└── README.md
 ```
 
 ## WHERE TO LOOK
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Add new tool | `src/tools/{name}/` | Create `index.ts` + `schema.ts`, register in `src/tools/index.ts` |
-| Add new skill | `src/skills/{name}.ts` | Export skill content, add to `src/skills/index.ts` |
-| Modify plugin hooks | `src/index.ts` | Event, chat.params, tool.execute hooks |
-| CLI changes | `src/cli/index.ts` | Uses @clack/prompts for UI |
-| Workflow templates | `src/cli/templates/{name}.ts` | Function returning YAML, uses shared.ts |
-| Test plugin exports | `test/plugin.test.js` | bun:test framework |
+| Modify action behavior | `actions/{name}/skill.md` | AI instructions |
+| Change action setup | `actions/{name}/action.yml` | GitHub Action config |
+| Modify helper scripts | `actions/{name}/src/*.ts` | Bun TypeScript scripts |
+| CLI changes | `src/cli/` | Workflow installer |
+| Workflow templates | `src/cli/templates/` | YAML generators |
 
-## CODE MAP
+## ACTIONS (4)
 
-| Symbol | Type | Location | Role |
-|--------|------|----------|------|
-| `plugin` | Function | `src/index.ts` | Main export, returns tools + hooks |
-| `tools` | Object | `src/tools/index.ts` | Exports all tool definitions |
-| `withRetry` | Function | `src/tools/utils/retry.ts` | Retry with exponential backoff |
-| `installSkills` | Function | `src/cli/installer.ts` | Copies skills to target repo |
-| `installWorkflows` | Function | `src/cli/installer.ts` | Creates workflow YAML files |
+| Action | Trigger | Description |
+|--------|---------|-------------|
+| `pr-review` | pull_request | AI code review, posts sticky comment |
+| `issue-label` | issues | Auto-labels based on content |
+| `doc-sync` | pull_request | Syncs docs with code changes |
+| `release` | workflow_dispatch | Semantic versioning + npm publish |
 
-## TOOLS (4)
+## HELPER SCRIPTS
 
-| Tool | Purpose | Uses |
-|------|---------|------|
-| `submit_review` | Post/update sticky PR comment | `gh api` + retry |
-| `apply_labels` | Label issues, create new labels | `gh label`, `gh issue edit` |
-| `github_release` | Create GitHub releases | `gh release create` |
-| `bun_release` | Version bump, push, npm publish | `bun pm version`, `bun publish` |
-
-## SKILLS (4)
-
-| Skill | Trigger | Tools Used |
-|-------|---------|------------|
-| `pr-review` | pull_request | `submit_review` |
-| `issue-label` | issues | `apply_labels` |
-| `doc-sync` | pull_request | Native `write`, `bash` |
-| `release-notes` | workflow_dispatch | `bun_release`, `github_release` |
+| Script | Location | Purpose |
+|--------|----------|---------|
+| `submit-review.ts` | `actions/pr-review/src/` | Post/update sticky PR comment |
+| `apply-labels.ts` | `actions/issue-label/src/` | Create + apply labels |
+| `bun-release.ts` | `actions/release/src/` | Version bump + npm publish |
+| `github-release.ts` | `actions/release/src/` | Create GitHub release |
 
 ## CONVENTIONS
 
-- **Skill pattern**: `src/skills/{name}.ts` exporting skill markdown string
-- **Tool pattern**: `index.ts` exports via `tool()` wrapper, `schema.ts` exports Zod schema
-- **Zod version**: ~4.1.8 (v4 API)
-- **Build**: Bun for bundling + tsc for declarations
-- **Runtime**: Bun shell (`Bun.$`) for subprocess execution
+- **Action pattern**: `action.yml` + `skill.md` + optional `src/*.ts`
+- **Skills**: Markdown files with AI instructions
+- **Scripts**: Bun TypeScript, called via `bun <script> --args`
+- **Build**: Bun for CLI bundling
 
 ## ANTI-PATTERNS
 
 - **No npm/yarn**: Bun only
-- **No tsc build**: tsc only emits declarations
-- **No inline schemas**: Zod schemas in separate files
+- **No plugin exports**: This is not an OpenCode plugin anymore
+- **No local skills**: Skills are bundled with actions
 
 ## COMMANDS
 
 ```bash
-bun run build      # Clean + bundle + declarations
+bun run build      # Bundle CLI
 bun run dev        # Build with watch
 bun run typecheck  # tsc --noEmit
-bun run test       # Build then bun test
+bun run test       # Run tests
+```
+
+## USER USAGE
+
+```yaml
+# In user's workflow
+- uses: activadee/open-workflows/actions/pr-review@main
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}  # or ANTHROPIC_API_KEY
+```
+
+Or via CLI:
+```bash
+bunx @activade/open-workflows
 ```

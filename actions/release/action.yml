@@ -1,0 +1,49 @@
+name: 'Release'
+description: 'Automated releases with semantic versioning and release notes'
+author: 'activadee'
+
+inputs:
+  model:
+    description: 'Model to use for release notes'
+    required: false
+    default: 'anthropic/claude-sonnet-4-5'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Setup OpenCode auth
+      if: env.OPENCODE_AUTH != ''
+      shell: bash
+      run: |
+        mkdir -p ~/.local/share/opencode
+        echo "$OPENCODE_AUTH" | base64 -d > ~/.local/share/opencode/auth.json
+
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Install skill
+      shell: bash
+      run: |
+        mkdir -p .opencode/skill/release-notes
+        cp "${{ github.action_path }}/skill.md" .opencode/skill/release-notes/SKILL.md
+
+    - name: Create Release
+      shell: bash
+      run: |
+        bunx opencode-ai@latest run --model "${{ inputs.model }}" \
+          "Load the release-notes skill. Scripts are at ${{ github.action_path }}/src/. Create a release."
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}

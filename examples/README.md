@@ -1,19 +1,19 @@
 # Example GitHub Actions Workflows
 
-These examples show how to use `@activade/open-workflows` skills in your repository.
+These examples show how to use `@activade/open-workflows` composite actions in your repository.
 
 ## Prerequisites
 
-1. Install the plugin and skills:
-
-```bash
-bunx open-workflows
-```
-
-2. Add your API key as a GitHub secret:
+Add your API key as a GitHub secret:
 
 ```bash
 gh secret set ANTHROPIC_API_KEY
+```
+
+Or if using Claude Max subscription:
+
+```bash
+cat ~/.local/share/opencode/auth.json | base64 | gh secret set OPENCODE_AUTH
 ```
 
 ## PR Review
@@ -36,10 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Review PR
-        run: bunx opencode-ai run "Load the pr-review skill and review PR ${{ github.event.pull_request.number }}"
+      - uses: activadee/open-workflows/actions/pr-review@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -64,10 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Label Issue
-        run: bunx opencode-ai run "Load the issue-label skill and label issue ${{ github.event.issue.number }}"
+      - uses: activadee/open-workflows/actions/issue-label@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -89,20 +83,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Sync Documentation
-        run: bunx opencode-ai run "Load the doc-sync skill and sync documentation for PR ${{ github.event.pull_request.number }}"
+      - uses: activadee/open-workflows/actions/doc-sync@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -123,24 +111,26 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Setup npm auth
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Create Release
-        run: bunx opencode-ai run "Load the release-notes skill and create a new release"
+      - uses: activadee/open-workflows/actions/release@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+## Using Claude Max (OAuth)
+
+Replace `ANTHROPIC_API_KEY` with `OPENCODE_AUTH` in any workflow:
+
+```yaml
+- uses: activadee/open-workflows/actions/pr-review@main
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}
 ```

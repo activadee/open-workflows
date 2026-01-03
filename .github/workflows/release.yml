@@ -14,21 +14,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Restore OpenCode auth
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.local/share/opencode/auth.json
-          key: opencode-auth
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Create Release
-        run: bunx opencode-ai run --model anthropic/claude-haiku-4-5 "Load the release-notes skill and create a new release"
+      - uses: ./actions/release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

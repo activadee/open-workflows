@@ -1,4 +1,4 @@
-import { CACHE_RESTORE_STEP, ENV_API_KEY, ENV_OAUTH } from './shared';
+import { ENV_OPENCODE_AUTH, ENV_API_KEY, ENV_NPM_TOKEN } from './shared';
 
 export const RELEASE = (useOAuth: boolean) => `name: Release
 
@@ -15,16 +15,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-${useOAuth ? CACHE_RESTORE_STEP : ''}
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Create Release
-        run: bunx opencode-ai run --model anthropic/claude-haiku-4-5 "Load the release-notes skill and create a new release"
-        env:${useOAuth ? ENV_OAUTH : ENV_API_KEY}
+      - uses: activadee/open-workflows/actions/release@main
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}${useOAuth ? ENV_OPENCODE_AUTH : ENV_API_KEY}${ENV_NPM_TOKEN}
 `;
