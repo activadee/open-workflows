@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-sonnet-4-5",
+  "small_model": "anthropic/claude-haiku-4-5",
+  "plugin": [
+    "@activadee-ai/open-workflows",
+    "@activade/open-workflows"
+  ],
+  "permission": {
+    "skill": {
+      "pr-review": "allow",
+      "issue-label": "allow",
+      "doc-sync": "allow",
+      "release-notes": "allow"
+    }
+  }
+}
