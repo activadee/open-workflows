@@ -52,7 +52,8 @@ export const bunReleaseTool: ToolDefinition = tool({
       results.push(`Packed ${tarball}`);
 
       checkAborted(signal);
-
+      await withRetry(() => Bun.$`npm config set registry https://registry.npmjs.org`.quiet(), { signal });
+      await withRetry(() => Bun.$`npm install -g npm@latest`.quiet(), { signal });
       await withRetry(() => Bun.$`npm publish ${tarball} --access public --provenance`.quiet(), { signal });
       await Bun.$`rm ${tarball}`.quiet();
       results.push(`Published ${versionArg} to npm`);
