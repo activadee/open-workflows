@@ -2,17 +2,11 @@ import type { Plugin } from '@opencode-ai/plugin';
 
 import { tools } from './tools';
 
-const WORKFLOW_TOOLS = ['submit_review', 'apply_labels', 'github_release', 'bun_release'];
-
 export const plugin: Plugin = async () => {
   return {
     tool: tools,
 
-    event: async ({ event }) => {
-      if (event.type === 'session.error') {
-        console.error(`[open-workflows] Session error:`, event.properties);
-      }
-    },
+    event: async ({ event: _event }) => {},
 
     'chat.params': async (input, output) => {
       const structuredPatterns = [
@@ -32,17 +26,9 @@ export const plugin: Plugin = async () => {
       }
     },
 
-    'tool.execute.before': async (input) => {
-      if (WORKFLOW_TOOLS.includes(input.tool)) {
-        console.log(`[open-workflows] Executing ${input.tool}...`);
-      }
-    },
+    'tool.execute.before': async (_input) => {},
 
-    'tool.execute.after': async (input, output) => {
-      if (WORKFLOW_TOOLS.includes(input.tool)) {
-        console.log(`[open-workflows] ${input.tool}: ${output.title}`);
-      }
-    },
+    'tool.execute.after': async (_input, _output) => {},
   };
 };
 
