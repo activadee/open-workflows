@@ -20,6 +20,29 @@ This interactive installer will:
 3. Install GitHub Actions to `.github/workflows/`
 4. Create/update `.opencode/opencode.json`
 
+### CLI Options
+
+```bash
+bunx open-workflows [OPTIONS]
+
+OPTIONS
+  --skills       Install skills only
+  --workflows    Install workflows only
+  --force, -f    Override existing files without prompts
+  --version, -v  Display version
+  --help, -h     Display help
+```
+
+By default, the CLI will prompt you to confirm overriding each existing file. Use `--force` to skip prompts and override all existing files automatically:
+
+```bash
+# Override all existing files
+bunx open-workflows --force
+
+# Interactive mode - prompts for each existing file
+bunx open-workflows
+```
+
 ## Manual Setup
 
 ### 1. Install the Plugin
