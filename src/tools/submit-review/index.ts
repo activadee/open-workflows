@@ -1,5 +1,6 @@
 import { tool, type ToolDefinition } from '@opencode-ai/plugin/tool';
 import { SubmitReviewSchema } from './schema';
+import { withRetry, checkAborted } from '../utils/retry';
 
 const STICKY_MARKER = '<!-- open-workflows:review-sticky -->';
 
@@ -145,8 +146,11 @@ function buildStickyCommentBody(summary: string, verdict: Verdict, issues: Revie
 export const submitReviewTool: ToolDefinition = tool({
   description: 'Submit a single sticky review comment on a GitHub PR.',
   args: SubmitReviewSchema.shape,
-  async execute(args) {
+  async execute(args, ctx) {
     const { repository, pullNumber, commitSha, summary, verdict, issues } = SubmitReviewSchema.parse(args);
+    const signal = ctx?.abort;
+
+    checkAborted(signal);
 
     const normalizedSummary = sanitizeSummaryText(summary);
     const rawIssues = Array.isArray(issues) ? issues : [];
@@ -156,29 +160,37 @@ export const submitReviewTool: ToolDefinition = tool({
 
     let existingCommentId: number | null = null;
     let fetchError: string | null = null;
+
     try {
-      const commentsJson = await Bun.$`gh api /repos/${repository}/issues/${pullNumber}/comments --paginate`.text();
+      const commentsJson = await withRetry(
+        () => Bun.$`gh api /repos/${repository}/issues/${pullNumber}/comments --paginate`.text(),
+        { signal }
+      );
       const comments = JSON.parse(commentsJson) as Array<{ id: number; body: string }>;
       const existing = comments.find((c) => c.body.includes(STICKY_MARKER));
       if (existing) existingCommentId = existing.id;
     } catch (error) {
-      // Distinguish between "no comment found" and actual API errors
       fetchError = error instanceof Error ? error.message : String(error);
     }
+
+    checkAborted(signal);
 
     const payload = JSON.stringify({ body });
     const input = new Response(payload);
 
     if (existingCommentId) {
-      await Bun.$`gh api --method PATCH /repos/${repository}/issues/comments/${existingCommentId} --input - < ${input}`.quiet();
-      return fetchError
-        ? `Warning: ${fetchError}. Updated existing review comment`
-        : 'Updated existing review comment';
+      await withRetry(
+        () =>
+          Bun.$`gh api --method PATCH /repos/${repository}/issues/comments/${existingCommentId} --input - < ${input}`.quiet(),
+        { signal }
+      );
+      return fetchError ? `Warning: ${fetchError}. Updated existing review comment` : 'Updated existing review comment';
     }
 
-    await Bun.$`gh api --method POST /repos/${repository}/issues/${pullNumber}/comments --input - < ${input}`.quiet();
-    return fetchError
-      ? `Warning: ${fetchError}. Posted new review comment`
-      : 'Posted review comment';
+    await withRetry(
+      () => Bun.$`gh api --method POST /repos/${repository}/issues/${pullNumber}/comments --input - < ${input}`.quiet(),
+      { signal }
+    );
+    return fetchError ? `Warning: ${fetchError}. Posted new review comment` : 'Posted review comment';
   },
 });

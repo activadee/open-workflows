@@ -1,26 +1,24 @@
 # Example GitHub Actions Workflows
 
-These are minimal examples showing how to use the `@activadee-ai/open-workflows` **OpenCode plugin** in your repository.
+These examples show how to use `@activadee-ai/open-workflows` skills in your repository.
 
 ## Prerequisites
 
-1. Add the plugin to your `opencode.json`:
-
-```json
-{
-  "plugin": ["@activadee-ai/open-workflows"]
-}
-```
-
-1. Add your model provider key (default: MiniMax) as a GitHub Actions secret:
+1. Install the plugin and skills:
 
 ```bash
-gh secret set MINIMAX_API_KEY -b"your-key"
+bunx open-workflows
+```
+
+2. Add your API key as a GitHub secret:
+
+```bash
+gh secret set ANTHROPIC_API_KEY
 ```
 
 ## PR Review
 
-Create `.github/workflows/pr-review.yml`:
+`.github/workflows/pr-review.yml`:
 
 ```yaml
 name: PR Review
@@ -41,16 +39,15 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       - name: Review PR
-        run: bunx opencode-ai run --agent review "Review PR ${{ github.event.pull_request.number }}"
+        run: bunx opencode-ai run "Load the pr-review skill and review PR ${{ github.event.pull_request.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 ## Issue Labeling
 
-Create `.github/workflows/issue-label.yml`:
+`.github/workflows/issue-label.yml`:
 
 ```yaml
 name: Issue Label
@@ -65,20 +62,20 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
 
       - name: Label Issue
-        run: bunx opencode-ai run --agent label "Label issue ${{ github.event.issue.number }}"
+        run: bunx opencode-ai run "Load the issue-label skill and label issue ${{ github.event.issue.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 ## Doc Sync
 
-Create `.github/workflows/doc-sync.yml`:
+`.github/workflows/doc-sync.yml`:
 
 ```yaml
 name: Doc Sync
@@ -93,7 +90,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
 
@@ -105,22 +102,21 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       - name: Sync Documentation
-        run: bunx opencode-ai run --agent doc-sync "Sync documentation"
+        run: bunx opencode-ai run "Load the doc-sync skill and sync documentation for PR ${{ github.event.pull_request.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-## Release Notes
+## Release
 
-Create `.github/workflows/release.yml`:
+`.github/workflows/release.yml`:
 
 ```yaml
 name: Release
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
 
 jobs:
   release:
@@ -128,30 +124,23 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - uses: oven-sh/setup-bun@v2
 
-      - name: Get previous tag
-        id: prev_tag
-        run: |
-          PREV=$(git describe --tags --abbrev=0 ${{ github.event.release.tag_name }}^ 2>/dev/null || echo "")
-          echo "tag=$PREV" >> $GITHUB_OUTPUT
+      - name: Setup npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - name: Generate Release Notes
-        run: |
-          NOTES=$(bunx opencode-ai run --agent release "Generate release notes for ${{ github.event.release.tag_name }}" 2>&1)
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Create Release
+        run: bunx opencode-ai run "Load the release-notes skill and create a new release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-
-      - name: Update Release Body
-        run: gh release edit ${{ github.event.release.tag_name }} --notes "${{ steps.notes.outputs.notes }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```

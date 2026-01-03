@@ -2,51 +2,47 @@
 
 import * as p from '@clack/prompts';
 import color from 'picocolors';
-import { 
-  installWorkflows, 
-  createOpencodeConfig, 
-  type WorkflowType 
-} from '../tools/setup-workflows/installer';
+import { installWorkflows, installSkills, createOpencodeConfig, type InstallResult } from './installer';
+import type { WorkflowType } from './templates';
 
-// Read version from package.json
 const pkg = await import('../../package.json').catch(() => ({ version: 'unknown' }));
 const cliVersion = pkg.version;
 
-// Get command line arguments
 const args = process.argv.slice(2);
 const isHelp = args.includes('--help') || args.includes('-h');
 const isVersion = args.includes('--version') || args.includes('-v');
+const isSkillsOnly = args.includes('--skills');
+const isWorkflowsOnly = args.includes('--workflows');
 
-// Handle --version flag
 if (isVersion) {
   console.log(`@activadee-ai/open-workflows v${cliVersion}`);
   process.exit(0);
 }
 
-// Handle --help flag or no subcommand
-if (isHelp || args.length === 0) {
+if (isHelp) {
   console.log(`@activadee-ai/open-workflows v${cliVersion}
 
 AI-powered GitHub automation workflows as an OpenCode plugin.
 
 USAGE
-  $ open-workflows [COMMAND]
+  $ open-workflows [OPTIONS]
 
-COMMANDS
-  install    Install and configure GitHub Actions workflows (default)
+OPTIONS
+  --skills       Install skills only (no workflows)
+  --workflows    Install workflows only (no skills)
+  --version, -v  Display version
+  --help, -h     Display this help
 
-WORKFLOWS
-  review     AI-powered code reviews on pull requests
-  label      Auto-label issues based on content
-  doc-sync   Keep documentation in sync with code changes
-  release    Generate release notes and publish to npm/GitHub
+WHAT GETS INSTALLED
+  Skills:     .opencode/skill/{pr-review,issue-label,doc-sync,release-notes}/SKILL.md
+  Workflows:  .github/workflows/{pr-review,issue-label,doc-sync,release}.yml
+  Config:     .opencode/opencode.json
 
-For more information, visit: https://github.com/activadee/open-workflows
+For more information: https://github.com/activadee/open-workflows
 `);
   process.exit(0);
 }
 
-// Default: Run the interactive installer
 p.intro(color.bgCyan(color.black(` @activadee-ai/open-workflows v${cliVersion} `)));
 
 const results = await p.group(
@@ -58,7 +54,7 @@ const results = await p.group(
           { value: 'review', label: 'PR Review', hint: 'AI-powered code reviews' },
           { value: 'label', label: 'Issue Label', hint: 'Auto-label issues' },
           { value: 'doc-sync', label: 'Doc Sync', hint: 'Keep docs in sync' },
-          { value: 'release', label: 'Release', hint: 'Generate notes, publish to npm & create GitHub release' },
+          { value: 'release', label: 'Release', hint: 'Automated releases with notes' },
         ],
         required: true,
       }),
@@ -74,7 +70,19 @@ const results = await p.group(
 const s = p.spinner();
 s.start('Installing open-workflows...');
 
-// Create .opencode/opencode.json
+const allResults: InstallResult[] = [];
+const selectedWorkflows = (results.workflows || []) as WorkflowType[];
+
+if (!isWorkflowsOnly) {
+  const skillResults = installSkills({});
+  allResults.push(...skillResults);
+}
+
+if (!isSkillsOnly) {
+  const workflowResults = installWorkflows({ workflows: selectedWorkflows });
+  allResults.push(...workflowResults);
+}
+
 let configResult;
 try {
   configResult = createOpencodeConfig();
@@ -84,36 +92,29 @@ try {
   process.exit(1);
 }
 
-// Install selected workflows
-const selectedWorkflows = results.workflows || [];
-const installResults = installWorkflows({
-  workflows: selectedWorkflows as WorkflowType[]
-});
-
-const hasErrors = installResults.some((r) => r.status === 'error');
+const hasErrors = allResults.some((r) => r.status === 'error');
 s.stop(hasErrors ? 'Installation completed with errors' : 'Installation complete!');
 
-// Display results
-const created = installResults.filter((r) => r.status === 'created');
-const skipped = installResults.filter((r) => r.status === 'skipped');
-const errors = installResults.filter((r) => r.status === 'error');
+const created = allResults.filter((r) => r.status === 'created');
+const skipped = allResults.filter((r) => r.status === 'skipped');
+const errors = allResults.filter((r) => r.status === 'error');
 
 if (created.length > 0) {
-  p.log.success(`Created ${created.length} workflow(s):`);
+  p.log.success(`Created ${created.length} file(s):`);
   for (const r of created) {
     p.log.message(`  ${color.green('✓')} ${r.path}`);
   }
 }
 
 if (skipped.length > 0) {
-  p.log.warn(`Skipped ${skipped.length} workflow(s) (already exist):`);
+  p.log.warn(`Skipped ${skipped.length} file(s) (already exist):`);
   for (const r of skipped) {
     p.log.message(`  ${color.yellow('○')} ${r.path}`);
   }
 }
 
 if (errors.length > 0) {
-  p.log.error(`Failed to install ${errors.length} workflow(s):`);
+  p.log.error(`Failed ${errors.length} file(s):`);
   for (const r of errors) {
     p.log.message(`  ${color.red('✗')} ${r.path}: ${r.message}`);
   }
@@ -122,11 +123,11 @@ if (errors.length > 0) {
 if (configResult.created) {
   p.log.success(`Created ${configResult.path}`);
 } else {
-  p.log.info(`Updated ${configResult.path} (plugin added)`);
+  p.log.info(`Updated ${configResult.path}`);
 }
 
 p.note(
-  `${color.cyan('1.')} Add MINIMAX_API_KEY secret:\n   ${color.dim('gh secret set MINIMAX_API_KEY')}\n\n${color.cyan('2.')} Commit and push the workflow files`,
+  `${color.cyan('1.')} Add your Anthropic API key:\n   ${color.dim('gh secret set ANTHROPIC_API_KEY')}\n\n${color.cyan('2.')} Commit and push the changes`,
   'Next steps'
 );
 

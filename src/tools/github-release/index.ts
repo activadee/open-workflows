@@ -1,5 +1,6 @@
 import { tool, type ToolDefinition } from '@opencode-ai/plugin/tool';
 import { GithubReleaseSchema } from './schema';
+import { withRetry, checkAborted } from '../utils/retry';
 
 function formatReleaseNotes(notes: string[]): string {
   return notes
@@ -16,8 +17,11 @@ function formatReleaseNotes(notes: string[]): string {
 export const githubReleaseTool: ToolDefinition = tool({
   description: 'Create a GitHub release with release notes.',
   args: GithubReleaseSchema.shape,
-  async execute(args) {
+  async execute(args, ctx) {
     const { repository, tag, notes, title, prerelease, draft } = GithubReleaseSchema.parse(args);
+    const signal = ctx?.abort;
+
+    checkAborted(signal);
 
     const results: string[] = [];
     const releaseTitle = title ?? tag;
@@ -38,7 +42,7 @@ export const githubReleaseTool: ToolDefinition = tool({
     }
 
     try {
-      const result = await Bun.$`gh ${ghArgs}`.text();
+      const result = await withRetry(() => Bun.$`gh ${ghArgs}`.text(), { signal });
       results.push(`Created release: ${tag}`);
 
       const releaseUrl = result.trim();

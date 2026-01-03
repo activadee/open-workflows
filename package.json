@@ -1,10 +1,11 @@
 {
   "name": "@activadee-ai/open-workflows",
-  "version": "2.3.0",
-  "description": "OpenCode plugin for AI-powered GitHub workflows: PR reviews, issue labeling, doc sync, and releases",
+  "version": "3.0.0",
+  "description": "OpenCode plugin with skills for AI-powered GitHub workflows: PR reviews, issue labeling, doc sync, and releases",
   "keywords": [
     "opencode",
     "opencode-plugin",
+    "opencode-skills",
     "github",
     "ai",
     "code-review",

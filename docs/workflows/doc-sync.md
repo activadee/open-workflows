@@ -1,19 +1,27 @@
 # Doc Sync Workflow
 
-The `doc-sync` workflow automatically keeps documentation in sync with code changes.
+The `doc-sync` skill keeps documentation in sync with code changes.
 
 ## Overview
 
-When a pull request is opened or updated, this workflow:
-1. Checks out the repository
-2. Configures Git for commits
-3. Sets up Bun runtime
-4. Runs the OpenCode doc-sync agent to analyze changes and update documentation
-5. Commits any documentation changes
+When a pull request is opened or updated:
+1. GitHub Actions triggers the workflow
+2. OpenCode loads the `doc-sync` skill
+3. AI analyzes each changed file for doc impact
+4. Updates relevant docs using native `write` and `bash` tools
+5. Commits changes with `[skip ci]` prefix
 
-## Usage
+## Installation
 
-Create `.github/workflows/doc-sync.yml`:
+```bash
+bunx open-workflows
+```
+
+Select "Doc Sync" when prompted.
+
+## Workflow File
+
+`.github/workflows/doc-sync.yml`:
 
 ```yaml
 name: Doc Sync
@@ -28,7 +36,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
 
@@ -41,46 +49,40 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Sync Documentation
-        run: bunx opencode-ai run --agent doc-sync "Sync documentation for PR ${{ github.event.pull_request.number }}"
+        run: bunx opencode-ai run "Load the doc-sync skill and sync documentation for PR ${{ github.event.pull_request.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GITHUB_TOKEN` | Yes | GitHub authentication token |
-| `MINIMAX_API_KEY` | Yes | MiniMax API key for AI |
-
-## Behavior
-
-The doc-sync workflow:
-- Only runs on non-draft pull requests
-- Creates a per-file checklist and analyzes each changed file to identify documentation needs
-- Updates relevant documentation files
-- Commits changes with `[skip ci]` to avoid triggering additional workflows
+| `GITHUB_TOKEN` | Yes | GitHub authentication (automatic) |
+| `ANTHROPIC_API_KEY` | Yes | Anthropic API key |
 
 ## Documentation Files
 
-The workflow considers these files for updates:
-- `README.md` (root level)
-- `docs/**/*.md`
-- Any `*.md` files at root level
-- API documentation if applicable
+The skill checks these locations:
+- `README.md` at repository root
+- Files under `docs/` directory
+- API documentation
+- Configuration examples
 
 ## What Gets Updated
 
-- **New features** → Documentation added
-- **Changed behavior** → Existing docs updated
-- **Removed features** → Docs removed or marked deprecated
-- **New config options** → Documented
-- **Changed APIs** → Examples updated
+| Code Change | Doc Update |
+|-------------|------------|
+| New feature | Add documentation |
+| Changed behavior | Update existing docs |
+| Removed feature | Remove or mark deprecated |
+| New config option | Document option |
+| Changed API | Update examples |
 
-## Commit Message
+## Customizing
 
-When documentation is updated, the commit message is:
-```
-[skip ci] docs: sync documentation with code changes
-```
+Edit `.opencode/skill/doc-sync/SKILL.md` to:
+- Change documentation scope
+- Add project-specific style guidelines
+- Modify commit message format

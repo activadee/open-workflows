@@ -5,67 +5,99 @@ This guide walks you through setting up `@activadee-ai/open-workflows` in your r
 ## Prerequisites
 
 - GitHub repository with Actions enabled
-- OpenCode CLI (installed in CI by the workflow files)
-- A model provider API key (default: MiniMax)
+- OpenCode CLI (installed automatically by workflows)
+- Anthropic API key
 
-## 1) Install the plugin (Bun)
+## Quick Start
+
+```bash
+bunx open-workflows
+```
+
+This interactive installer will:
+1. Prompt you to select workflows
+2. Install skills to `.opencode/skill/`
+3. Install GitHub Actions to `.github/workflows/`
+4. Create/update `.opencode/opencode.json`
+
+## Manual Setup
+
+### 1. Install the Plugin
 
 ```bash
 bun add -d @activadee-ai/open-workflows
 ```
 
-## 2) Configure OpenCode
+### 2. Create OpenCode Config
 
-Create `opencode.json` at your repo root:
+Create `.opencode/opencode.json`:
 
 ```json
 {
-  "plugin": ["@activadee-ai/open-workflows"]
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-sonnet-4-5",
+  "small_model": "anthropic/claude-haiku-4-5",
+  "plugin": ["@activadee-ai/open-workflows"],
+  "permission": {
+    "skill": {
+      "pr-review": "allow",
+      "issue-label": "allow",
+      "doc-sync": "allow",
+      "release-notes": "allow"
+    }
+  }
 }
 ```
 
-Optional: override the model per-agent in `opencode.json`.
-
-## 3) Add GitHub Secrets
-
-Add your API key as a GitHub Actions secret:
+### 3. Add GitHub Secrets
 
 ```bash
-gh secret set MINIMAX_API_KEY -b"your-key"
+gh secret set ANTHROPIC_API_KEY
 ```
 
-## 4) Install workflow files
-
-### Option A: CLI Installer (recommended)
-
-Run the interactive installer to select and configure workflows:
+For releases, also add:
 
 ```bash
-npx open-workflows
+gh secret set NPM_TOKEN
 ```
 
-The CLI will:
-1. Prompt you to select which workflows to install
-2. Create the workflow files in `.github/workflows/`
-3. Create or update `.opencode/opencode.json` with the plugin configuration
+### 4. Install Skills
 
-### Option B: Ask OpenCode to install
+Copy skills from the package to your repo:
 
-In an OpenCode session, ask:
-
-```
-Set up PR review and issue labeling workflows
+```bash
+bunx open-workflows --skills
 ```
 
-OpenCode will use the `setup_workflows` tool (from this plugin) to generate the `.github/workflows/*.yml` files.
+Or manually copy from `node_modules/@activadee-ai/open-workflows/skills/` to `.opencode/skill/`.
 
-### Option C: Copy examples
+### 5. Install Workflows
 
-If you prefer manual setup, copy the examples from `examples/README.md` into your repository.
+```bash
+bunx open-workflows --workflows
+```
 
-## 5) Verify
+Or manually create workflow files in `.github/workflows/`.
 
-- Open a PR → the PR review workflow should run
-- Open or edit an issue → the issue labeling workflow should run
+## Customizing Skills
 
-If something fails, check the Actions logs and confirm the `MINIMAX_API_KEY` secret is set.
+After installation, edit `.opencode/skill/*/SKILL.md` to customize behavior.
+
+Example: Change review focus areas in `.opencode/skill/pr-review/SKILL.md`.
+
+## Customizing Models
+
+Override models in `opencode.json`:
+
+```json
+{
+  "model": "openai/gpt-4o",
+  "small_model": "openai/gpt-4o-mini"
+}
+```
+
+## Verify Setup
+
+1. Open a PR - the review workflow should run
+2. Open an issue - the label workflow should run
+3. Check Actions logs for any errors

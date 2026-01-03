@@ -8,6 +8,19 @@ describe('open-workflows plugin', () => {
     expect(typeof namedPlugin).toBe('function');
   });
 
+  it('exports exactly 4 tools (v3.0)', async () => {
+    const hooks = await namedPlugin({});
+    const toolNames = Object.keys(hooks.tool);
+
+    expect(toolNames).toHaveLength(4);
+    expect(toolNames.sort()).toEqual([
+      'apply_labels',
+      'bun_release',
+      'github_release',
+      'submit_review',
+    ]);
+  });
+
   it('registers tools with explicit GitHub context args', async () => {
     const hooks = await namedPlugin({});
 
@@ -28,5 +41,37 @@ describe('open-workflows plugin', () => {
 
     const bunReleaseArgs = Object.keys(hooks.tool.bun_release.args);
     expect(bunReleaseArgs).toEqual(expect.arrayContaining(['version']));
+  });
+
+  it('registers plugin hooks (v3.0)', async () => {
+    const hooks = await namedPlugin({});
+
+    expect(hooks.event).toBeDefined();
+    expect(typeof hooks.event).toBe('function');
+
+    expect(hooks['chat.params']).toBeDefined();
+    expect(typeof hooks['chat.params']).toBe('function');
+
+    expect(hooks['tool.execute.before']).toBeDefined();
+    expect(typeof hooks['tool.execute.before']).toBe('function');
+
+    expect(hooks['tool.execute.after']).toBeDefined();
+    expect(typeof hooks['tool.execute.after']).toBe('function');
+  });
+
+  it('chat.params lowers temperature for workflow patterns', async () => {
+    const hooks = await namedPlugin({});
+    const output = {};
+
+    await hooks['chat.params']({ message: 'Load the pr-review skill and review this PR' }, output);
+    expect(output.temperature).toBe(0.2);
+  });
+
+  it('chat.params does not modify temperature for unrelated messages', async () => {
+    const hooks = await namedPlugin({});
+    const output = {};
+
+    await hooks['chat.params']({ message: 'Hello, can you help me with something?' }, output);
+    expect(output.temperature).toBeUndefined();
   });
 });

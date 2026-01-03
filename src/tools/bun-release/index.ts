@@ -1,5 +1,6 @@
 import { tool, type ToolDefinition } from '@opencode-ai/plugin/tool';
 import { BunReleaseSchema } from './schema';
+import { withRetry, checkAborted } from '../utils/retry';
 
 function extractVersion(tag: string): string {
   return tag.startsWith('v') ? tag.slice(1) : tag;
@@ -8,8 +9,11 @@ function extractVersion(tag: string): string {
 export const bunReleaseTool: ToolDefinition = tool({
   description: 'Release a package: bump version with bun pm version, push to repo with tags, and publish to npm.',
   args: BunReleaseSchema.shape,
-  async execute(args) {
+  async execute(args, ctx) {
     const { version } = BunReleaseSchema.parse(args);
+    const signal = ctx?.abort;
+
+    checkAborted(signal);
 
     const results: string[] = [];
     const versionArg = extractVersion(version);
@@ -23,9 +27,11 @@ export const bunReleaseTool: ToolDefinition = tool({
       return results.join('\n');
     }
 
+    checkAborted(signal);
+
     try {
-      await Bun.$`git push`.quiet();
-      await Bun.$`git push --tags`.quiet();
+      await withRetry(() => Bun.$`git push`.quiet(), { signal });
+      await withRetry(() => Bun.$`git push --tags`.quiet(), { signal });
       results.push('Pushed changes and tags to remote');
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -33,8 +39,10 @@ export const bunReleaseTool: ToolDefinition = tool({
       return results.join('\n');
     }
 
+    checkAborted(signal);
+
     try {
-      await Bun.$`bun publish --access public`.quiet();
+      await withRetry(() => Bun.$`bun publish --access public`.quiet(), { signal });
       results.push(`Published ${versionArg} to npm`);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);

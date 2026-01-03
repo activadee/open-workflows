@@ -1,28 +1,56 @@
 # open-workflows
 
-AI-powered GitHub automation workflows as an OpenCode plugin. Provides agents for code reviews, issue labeling, documentation sync, and release notes.
+AI-powered GitHub automation workflows as an OpenCode plugin. Uses **Skills** for customizable PR reviews, issue labeling, documentation sync, and release automation.
 
 Powered by [OpenCode](https://opencode.ai).
 
-## Quick Start (CLI)
-
-Install the CLI and run the interactive installer:
+## Quick Start
 
 ```bash
-bun add -d @activadee-ai/open-workflows
-npx open-workflows
+bunx open-workflows
 ```
 
-The CLI will prompt you to select which workflows to install and automatically sets up the configuration.
+The CLI will:
+1. Prompt you to select workflows
+2. Install skills to `.opencode/skill/`
+3. Install GitHub Actions workflows to `.github/workflows/`
+4. Create/update `.opencode/opencode.json`
 
-### CLI Flags
+## What's Installed
 
-- `--version`, `-v` - Display version information
-- `--help`, `-h` - Display usage instructions
+### Skills (`.opencode/skill/`)
+
+| Skill | Description |
+|-------|-------------|
+| `pr-review` | AI-powered code review with structured findings |
+| `issue-label` | Auto-label issues based on content |
+| `doc-sync` | Keep docs in sync with code changes |
+| `release-notes` | Semantic versioning and release automation |
+
+### Workflows (`.github/workflows/`)
+
+| Workflow | Trigger | Description |
+|----------|---------|-------------|
+| `pr-review.yml` | Pull request | Reviews PRs using `pr-review` skill |
+| `issue-label.yml` | Issue opened/edited | Labels issues using `issue-label` skill |
+| `doc-sync.yml` | Pull request | Syncs docs using `doc-sync` skill |
+| `release.yml` | Manual dispatch | Creates releases using `release-notes` skill |
+
+## CLI Options
+
+```bash
+bunx open-workflows [OPTIONS]
+
+OPTIONS
+  --skills       Install skills only
+  --workflows    Install workflows only
+  --version, -v  Display version
+  --help, -h     Display help
+```
 
 ## Plugin Installation
 
-Add the plugin to your `opencode.json`:
+Add to your `opencode.json`:
 
 ```json
 {
@@ -30,13 +58,47 @@ Add the plugin to your `opencode.json`:
 }
 ```
 
-## Available Workflows
+The plugin provides 4 tools for the skills to use:
+- `submit_review` - Post PR review comments
+- `apply_labels` - Apply labels to issues
+- `github_release` - Create GitHub releases
+- `bun_release` - Publish to npm
 
-- **PR Review** - AI-powered code reviews on pull requests
-- **Issue Label** - Auto-label issues based on content
-- **Doc Sync** - Keep documentation in sync with code changes
-- **Release** - Generate release notes and publish to npm/GitHub
+## GitHub Secrets
 
-## GitHub Actions Setup
+Add your API key as a GitHub Actions secret:
 
-The `setup_workflows` tool will generate the GitHub Action files in `.github/workflows/`. No manual steps are required.
+```bash
+gh secret set ANTHROPIC_API_KEY
+```
+
+For the release workflow, also add:
+
+```bash
+gh secret set NPM_TOKEN
+```
+
+## How It Works
+
+1. GitHub Actions trigger on events (PR, issue, manual)
+2. Workflow runs OpenCode with a task message
+3. OpenCode loads the appropriate skill
+4. Skill guides the AI through the workflow
+5. AI uses the plugin's tools to complete actions
+
+## Customizing Skills
+
+Skills are just markdown files. After installation, edit `.opencode/skill/*/SKILL.md` to customize behavior.
+
+## v3.0 Breaking Changes
+
+- **Skills replace Agents**: Use `"Load the pr-review skill..."` instead of `--agent review`
+- **Model change**: Default is now Claude (`anthropic/claude-sonnet-4-5`)
+- **API key**: Use `ANTHROPIC_API_KEY` instead of `MINIMAX_API_KEY`
+- **Removed tools**: `commit_docs` and `setup_workflows` removed
+
+See [MIGRATION.md](docs/MIGRATION.md) for upgrade guide.
+
+## License
+
+MIT
