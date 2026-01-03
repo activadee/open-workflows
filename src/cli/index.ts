@@ -15,12 +15,12 @@ const isSkillsOnly = args.includes('--skills');
 const isWorkflowsOnly = args.includes('--workflows');
 
 if (isVersion) {
-  console.log(`@activade/open-workflows v${cliVersion}`);
+  process.stdout.write(`@activade/open-workflows v${cliVersion}\n`);
   process.exit(0);
 }
 
 if (isHelp) {
-  console.log(`@activade/open-workflows v${cliVersion}
+  process.stdout.write(`@activade/open-workflows v${cliVersion}
 
 AI-powered GitHub automation workflows as an OpenCode plugin.
 
