@@ -84,7 +84,7 @@ open-workflows/
 
 - **Skill pattern**: `src/skills/{name}.ts` exporting skill markdown string
 - **Tool pattern**: `index.ts` exports via `tool()` wrapper, `schema.ts` exports Zod schema
-- **Zod version**: ~4.1.8 (v4 API)
+- **Zod version**: ~4.3.4 (v4 API)
 - **Build**: Bun for bundling + tsc for declarations
 - **Runtime**: Bun shell (`Bun.$`) for subprocess execution
 
