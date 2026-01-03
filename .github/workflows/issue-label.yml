@@ -12,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Restore OpenCode auth
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.local/share/opencode/auth.json
+          key: opencode-auth
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
@@ -19,4 +25,3 @@ jobs:
         run: bunx opencode-ai run "Load the issue-label skill and label issue ${{ github.event.issue.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

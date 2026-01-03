@@ -16,7 +16,14 @@ open-workflows/
 │   ├── cli/            # Interactive installer
 │   │   ├── index.ts    # CLI entry point
 │   │   ├── installer.ts # Installation logic
-│   │   └── templates.ts # Workflow YAML templates
+│   │   └── templates/  # Workflow YAML templates
+│   │       ├── index.ts
+│   │       ├── shared.ts
+│   │       ├── auth.ts
+│   │       ├── pr-review.ts
+│   │       ├── issue-label.ts
+│   │       ├── doc-sync.ts
+│   │       └── release.ts
 │   ├── skills/         # Embedded skill content
 │   │   ├── index.ts    # Re-exports SKILLS object
 │   │   ├── pr-review.ts
@@ -42,7 +49,7 @@ open-workflows/
 | Add new skill | `src/skills/{name}.ts` | Export skill content, add to `src/skills/index.ts` |
 | Modify plugin hooks | `src/index.ts` | Event, chat.params, tool.execute hooks |
 | CLI changes | `src/cli/index.ts` | Uses @clack/prompts for UI |
-| Workflow templates | `src/cli/templates.ts` | Escaped YAML with `\${{ }}` |
+| Workflow templates | `src/cli/templates/{name}.ts` | Function returning YAML, uses shared.ts |
 | Test plugin exports | `test/plugin.test.js` | bun:test framework |
 
 ## CODE MAP

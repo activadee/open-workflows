@@ -1,4 +1,6 @@
-name: Release
+import { CACHE_RESTORE_STEP, ENV_API_KEY, ENV_OAUTH } from './shared';
+
+export const RELEASE = (useOAuth: boolean) => `name: Release
 
 on:
   workflow_dispatch:
@@ -12,13 +14,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Restore OpenCode auth
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.local/share/opencode/auth.json
-          key: opencode-auth
-
+${useOAuth ? CACHE_RESTORE_STEP : ''}
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
@@ -28,9 +24,9 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Setup npm auth
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+        run: echo "//registry.npmjs.org/:_authToken=\${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Create Release
         run: bunx opencode-ai run "Load the release-notes skill and create a new release"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:${useOAuth ? ENV_OAUTH : ENV_API_KEY}
+`;

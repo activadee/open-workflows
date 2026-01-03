@@ -2,7 +2,7 @@
 
 import * as p from '@clack/prompts';
 import color from 'picocolors';
-import { installWorkflows, installSkills, createOpencodeConfig, type InstallResult } from './installer';
+import { installWorkflows, installSkills, installAuthWorkflow, createOpencodeConfig, type InstallResult } from './installer';
 import type { WorkflowType } from './templates';
 
 const pkg = await import('../../package.json').catch(() => ({ version: 'unknown' }));
@@ -58,6 +58,18 @@ const results = await p.group(
         ],
         required: true,
       }),
+    hasClaudeMax: () =>
+      p.confirm({
+        message: 'Do you have a Claude Max subscription?',
+        initialValue: false,
+      }),
+    useOAuth: ({ results }) =>
+      results.hasClaudeMax
+        ? p.confirm({
+            message: 'Set up OAuth token caching for GitHub Actions?',
+            initialValue: true,
+          })
+        : Promise.resolve(false),
   },
   {
     onCancel: () => {
@@ -72,6 +84,7 @@ s.start('Installing open-workflows...');
 
 const allResults: InstallResult[] = [];
 const selectedWorkflows = (results.workflows || []) as WorkflowType[];
+const useOAuth = Boolean(results.useOAuth);
 
 if (!isWorkflowsOnly) {
   const skillResults = installSkills({});
@@ -79,8 +92,13 @@ if (!isWorkflowsOnly) {
 }
 
 if (!isSkillsOnly) {
-  const workflowResults = installWorkflows({ workflows: selectedWorkflows });
+  const workflowResults = installWorkflows({ workflows: selectedWorkflows, useOAuth });
   allResults.push(...workflowResults);
+
+  if (useOAuth) {
+    const authResult = installAuthWorkflow({});
+    allResults.push(authResult);
+  }
 }
 
 let configResult;
@@ -126,9 +144,16 @@ if (configResult.created) {
   p.log.info(`Updated ${configResult.path}`);
 }
 
-p.note(
-  `${color.cyan('1.')} Add your Anthropic API key:\n   ${color.dim('gh secret set ANTHROPIC_API_KEY')}\n\n${color.cyan('2.')} Commit and push the changes`,
-  'Next steps'
-);
+if (useOAuth) {
+  p.note(
+    `${color.cyan('1.')} Export your OpenCode auth file as a secret:\n   ${color.dim('gh secret set OPENCODE_AUTH < ~/.local/share/opencode/auth.json')}\n\n${color.cyan('2.')} Commit and push the changes\n\n${color.cyan('3.')} Run the auth workflow to initialize the cache:\n   ${color.dim('gh workflow run opencode-auth.yml')}`,
+    'Next steps (OAuth)'
+  );
+} else {
+  p.note(
+    `${color.cyan('1.')} Add your Anthropic API key:\n   ${color.dim('gh secret set ANTHROPIC_API_KEY')}\n\n${color.cyan('2.')} Commit and push the changes`,
+    'Next steps'
+  );
+}
 
 p.outro(color.green('✓ open-workflows installed successfully!'));

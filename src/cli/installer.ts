@@ -1,10 +1,25 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { WORKFLOWS, WORKFLOW_FILE_MAP, type WorkflowType } from './templates';
+import {
+  AUTH_WORKFLOW,
+  PR_REVIEW,
+  ISSUE_LABEL,
+  DOC_SYNC,
+  RELEASE,
+  WORKFLOW_FILE_MAP,
+  type WorkflowType,
+} from './templates';
 import { SKILLS, SKILL_NAMES } from '../skills';
 
+const WORKFLOW_GENERATORS: Record<string, (useOAuth: boolean) => string> = {
+  'pr-review': PR_REVIEW,
+  'issue-label': ISSUE_LABEL,
+  'doc-sync': DOC_SYNC,
+  release: RELEASE,
+};
+
 export interface InstallResult {
-  type: 'workflow' | 'skill' | 'config';
+  type: 'workflow' | 'skill' | 'config' | 'auth';
   name: string;
   status: 'created' | 'skipped' | 'error';
   path: string;
@@ -14,10 +29,11 @@ export interface InstallResult {
 export interface InstallOptions {
   workflows: WorkflowType[];
   cwd?: string;
+  useOAuth?: boolean;
 }
 
 export function installWorkflows(options: InstallOptions): InstallResult[] {
-  const { workflows, cwd = process.cwd() } = options;
+  const { workflows, cwd = process.cwd(), useOAuth = false } = options;
   const results: InstallResult[] = [];
   const workflowDir = path.join(cwd, '.github', 'workflows');
 
@@ -27,8 +43,21 @@ export function installWorkflows(options: InstallOptions): InstallResult[] {
 
   for (const wf of workflows) {
     const fileName = WORKFLOW_FILE_MAP[wf];
-    const content = WORKFLOWS[fileName];
+    const generator = WORKFLOW_GENERATORS[fileName];
     const filePath = path.join(workflowDir, `${fileName}.yml`);
+
+    if (!generator) {
+      results.push({
+        type: 'workflow',
+        name: wf,
+        status: 'error',
+        path: filePath,
+        message: `Unknown workflow: ${wf}`,
+      });
+      continue;
+    }
+
+    const content = generator(useOAuth);
 
     if (!content) {
       results.push({
@@ -73,6 +102,45 @@ export function installWorkflows(options: InstallOptions): InstallResult[] {
   }
 
   return results;
+}
+
+export function installAuthWorkflow(options: { cwd?: string }): InstallResult {
+  const { cwd = process.cwd() } = options;
+  const workflowDir = path.join(cwd, '.github', 'workflows');
+  const filePath = path.join(workflowDir, 'opencode-auth.yml');
+
+  if (!fs.existsSync(workflowDir)) {
+    fs.mkdirSync(workflowDir, { recursive: true });
+  }
+
+  if (fs.existsSync(filePath)) {
+    return {
+      type: 'auth',
+      name: 'opencode-auth',
+      status: 'skipped',
+      path: '.github/workflows/opencode-auth.yml',
+      message: 'Skipped: already exists',
+    };
+  }
+
+  try {
+    fs.writeFileSync(filePath, AUTH_WORKFLOW, 'utf-8');
+    return {
+      type: 'auth',
+      name: 'opencode-auth',
+      status: 'created',
+      path: '.github/workflows/opencode-auth.yml',
+      message: 'Created successfully',
+    };
+  } catch (error) {
+    return {
+      type: 'auth',
+      name: 'opencode-auth',
+      status: 'error',
+      path: filePath,
+      message: `Failed to write file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
 }
 
 export function installSkills(options: { cwd?: string }): InstallResult[] {

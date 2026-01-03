@@ -1,4 +1,6 @@
-name: Doc Sync
+import { CACHE_RESTORE_STEP, ENV_API_KEY, ENV_OAUTH } from './shared';
+
+export const DOC_SYNC = (useOAuth: boolean) => `name: Doc Sync
 
 on:
   pull_request:
@@ -12,14 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
-
-      - name: Restore OpenCode auth
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.local/share/opencode/auth.json
-          key: opencode-auth
-
+          ref: \${{ github.head_ref }}
+${useOAuth ? CACHE_RESTORE_STEP : ''}
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
@@ -29,6 +25,6 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Sync Documentation
-        run: bunx opencode-ai run "Load the doc-sync skill and sync documentation for PR ${{ github.event.pull_request.number }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bunx opencode-ai run "Load the doc-sync skill and sync documentation for PR \${{ github.event.pull_request.number }}"
+        env:${useOAuth ? ENV_OAUTH : ENV_API_KEY}
+`;
