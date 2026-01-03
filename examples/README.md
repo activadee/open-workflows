@@ -4,7 +4,7 @@ These examples show how to use `@activade/open-workflows` composite actions in y
 
 ## Prerequisites
 
-Add your API key as a GitHub secret:
+For AI-powered actions (pr-review, issue-label, doc-sync), add your API key:
 
 ```bash
 gh secret set ANTHROPIC_API_KEY
@@ -96,7 +96,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-## Release
+## Release (No AI required)
+
+The release action doesn't use AI - it generates changelogs from git commits and publishes with npm provenance.
 
 `.github/workflows/release.yml`:
 
@@ -105,6 +107,19 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      version:
+        description: 'Override version (optional)'
+        required: false
+        type: string
 
 jobs:
   release:
@@ -118,15 +133,23 @@ jobs:
           fetch-depth: 0
 
       - uses: activadee/open-workflows/actions/release@main
+        with:
+          bump: ${{ inputs.bump }}
+          version: ${{ inputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+No NPM_TOKEN needed - uses OIDC trusted publishing with provenance.
+
+Trigger with:
+```bash
+gh workflow run release -f bump=patch
 ```
 
 ## Using Claude Max (OAuth)
 
-Replace `ANTHROPIC_API_KEY` with `OPENCODE_AUTH` in any workflow:
+Replace `ANTHROPIC_API_KEY` with `OPENCODE_AUTH` in AI-powered workflows:
 
 ```yaml
 - uses: activadee/open-workflows/actions/pr-review@main

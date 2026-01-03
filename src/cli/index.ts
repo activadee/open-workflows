@@ -42,16 +42,14 @@ WHAT GETS INSTALLED
   .github/workflows/issue-label.yml
   .github/workflows/doc-sync.yml
   .github/workflows/release.yml
+  .github/workflows/opencode-auth.yml (OAuth only)
 
 REQUIRED SECRETS
   For Claude Max (OAuth):
-    OPENCODE_AUTH - Base64 encoded auth.json from ~/.local/share/opencode/auth.json
+    OPENCODE_AUTH - Your auth.json from ~/.local/share/opencode/auth.json
 
   For API Key:
     ANTHROPIC_API_KEY - Your Anthropic API key
-
-  For releases:
-    NPM_TOKEN - Your npm publish token
 
 For more information: https://github.com/activadee/open-workflows
 `);
@@ -87,8 +85,12 @@ const promptResults = await p.group(
   }
 );
 
-const selectedWorkflows = (promptResults.workflows || []) as WorkflowType[];
+let selectedWorkflows = (promptResults.workflows || []) as WorkflowType[];
 const useOAuth = Boolean(promptResults.useOAuth);
+
+if (useOAuth && !selectedWorkflows.includes('opencode-auth')) {
+  selectedWorkflows = [...selectedWorkflows, 'opencode-auth'];
+}
 
 const workflowOverrides = new Set<string>();
 
@@ -164,7 +166,7 @@ if (errors.length > 0) {
 
 if (useOAuth) {
   p.note(
-    `${color.cyan('1.')} Export your OpenCode auth as a base64 secret:\n   ${color.dim('cat ~/.local/share/opencode/auth.json | base64 | gh secret set OPENCODE_AUTH')}\n\n${color.cyan('2.')} Commit and push the workflow files`,
+    `${color.cyan('1.')} Export your OpenCode auth as a secret:\n   ${color.dim('gh secret set OPENCODE_AUTH < ~/.local/share/opencode/auth.json')}\n\n${color.cyan('2.')} Commit and push the workflow files\n\n${color.cyan('3.')} Run the opencode-auth workflow manually to initialize the cache:\n   ${color.dim('gh workflow run opencode-auth.yml')}`,
     'Next steps (OAuth)'
   );
 } else {
@@ -172,10 +174,6 @@ if (useOAuth) {
     `${color.cyan('1.')} Add your Anthropic API key:\n   ${color.dim('gh secret set ANTHROPIC_API_KEY')}\n\n${color.cyan('2.')} Commit and push the workflow files`,
     'Next steps'
   );
-}
-
-if (selectedWorkflows.includes('release')) {
-  p.log.info(`${color.yellow('Note:')} Release workflow also requires NPM_TOKEN secret`);
 }
 
 p.outro(color.green('Done!'));

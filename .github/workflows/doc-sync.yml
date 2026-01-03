@@ -16,7 +16,12 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - uses: ./actions/doc-sync
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.local/share/opencode/auth.json
+          key: opencode-auth
+
+      - uses: activadee/open-workflows/actions/doc-sync@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}

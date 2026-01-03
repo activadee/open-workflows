@@ -13,7 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./actions/pr-review
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.local/share/opencode/auth.json
+          key: opencode-auth
+
+      - uses: activadee/open-workflows/actions/pr-review@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}

@@ -12,7 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./actions/issue-label
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.local/share/opencode/auth.json
+          key: opencode-auth
+
+      - uses: activadee/open-workflows/actions/issue-label@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}

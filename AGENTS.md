@@ -5,32 +5,27 @@
 
 ## OVERVIEW
 
-AI-powered GitHub automation workflows via composite actions. Provides PR reviews, issue labeling, documentation sync, and release automation. Uses Bun runtime + TypeScript.
+GitHub automation workflows via composite actions. AI-powered reviews, labeling, and doc sync - plus automated releases with npm provenance.
 
 ## STRUCTURE
 
 ```
 open-workflows/
 ├── actions/                    # Composite GitHub Actions
-│   ├── pr-review/
-│   │   ├── action.yml         # Action definition
-│   │   ├── skill.md           # AI instructions
-│   │   └── src/
-│   │       └── submit-review.ts
-│   ├── issue-label/
+│   ├── pr-review/             # AI-powered
 │   │   ├── action.yml
 │   │   ├── skill.md
-│   │   └── src/
-│   │       └── apply-labels.ts
-│   ├── doc-sync/
+│   │   └── src/submit-review.ts
+│   ├── issue-label/           # AI-powered
+│   │   ├── action.yml
+│   │   ├── skill.md
+│   │   └── src/apply-labels.ts
+│   ├── doc-sync/              # AI-powered
 │   │   ├── action.yml
 │   │   └── skill.md
-│   └── release/
+│   └── release/               # No AI - pure script
 │       ├── action.yml
-│       ├── skill.md
-│       └── src/
-│           ├── bun-release.ts
-│           └── github-release.ts
+│       └── src/publish.ts
 ├── src/
 │   └── cli/                   # Workflow installer CLI
 │       ├── index.ts
@@ -40,46 +35,45 @@ open-workflows/
 └── README.md
 ```
 
+## ACTIONS
+
+| Action | AI | Description |
+|--------|-----|-------------|
+| `pr-review` | Yes | AI code review, posts sticky comment |
+| `issue-label` | Yes | Auto-labels based on content |
+| `doc-sync` | Yes | Syncs docs with code changes |
+| `release` | No | Semantic versioning + npm publish with provenance |
+
 ## WHERE TO LOOK
 
-| Task | Location | Notes |
-|------|----------|-------|
-| Modify action behavior | `actions/{name}/skill.md` | AI instructions |
-| Change action setup | `actions/{name}/action.yml` | GitHub Action config |
-| Modify helper scripts | `actions/{name}/src/*.ts` | Bun TypeScript scripts |
-| CLI changes | `src/cli/` | Workflow installer |
-| Workflow templates | `src/cli/templates/` | YAML generators |
-
-## ACTIONS (4)
-
-| Action | Trigger | Description |
-|--------|---------|-------------|
-| `pr-review` | pull_request | AI code review, posts sticky comment |
-| `issue-label` | issues | Auto-labels based on content |
-| `doc-sync` | pull_request | Syncs docs with code changes |
-| `release` | workflow_dispatch | Semantic versioning + npm publish |
+| Task | Location |
+|------|----------|
+| AI action behavior | `actions/{name}/skill.md` |
+| Action setup | `actions/{name}/action.yml` |
+| Helper scripts | `actions/{name}/src/*.ts` |
+| Release logic | `actions/release/src/publish.ts` |
+| CLI | `src/cli/` |
+| Workflow templates | `src/cli/templates/` |
 
 ## HELPER SCRIPTS
 
-| Script | Location | Purpose |
-|--------|----------|---------|
-| `submit-review.ts` | `actions/pr-review/src/` | Post/update sticky PR comment |
-| `apply-labels.ts` | `actions/issue-label/src/` | Create + apply labels |
-| `bun-release.ts` | `actions/release/src/` | Version bump + npm publish |
-| `github-release.ts` | `actions/release/src/` | Create GitHub release |
+| Script | Purpose |
+|--------|---------|
+| `submit-review.ts` | Post/update sticky PR comment |
+| `apply-labels.ts` | Create + apply labels |
+| `publish.ts` | Version bump, changelog, npm publish, GitHub release |
 
 ## CONVENTIONS
 
-- **Action pattern**: `action.yml` + `skill.md` + optional `src/*.ts`
-- **Skills**: Markdown files with AI instructions
-- **Scripts**: Bun TypeScript, called via `bun <script> --args`
+- **AI actions**: `action.yml` + `skill.md` + optional `src/*.ts`
+- **Non-AI actions**: `action.yml` + `src/*.ts` (no skill.md)
+- **Scripts**: Bun TypeScript, uses `Bun.$` for shell
 - **Build**: Bun for CLI bundling
 
 ## ANTI-PATTERNS
 
+- **No plugin exports**: Pure composite actions
 - **No npm/yarn**: Bun only
-- **No plugin exports**: This is not an OpenCode plugin anymore
-- **No local skills**: Skills are bundled with actions
 
 ## COMMANDS
 
@@ -92,15 +86,24 @@ bun run test       # Run tests
 
 ## USER USAGE
 
+**AI-powered actions:**
 ```yaml
-# In user's workflow
 - uses: activadee/open-workflows/actions/pr-review@main
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}  # or ANTHROPIC_API_KEY
 ```
 
-Or via CLI:
+**Release action (no AI, OIDC publishing):**
+```yaml
+- uses: activadee/open-workflows/actions/release@main
+  with:
+    bump: patch  # or minor, major
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+**CLI:**
 ```bash
 bunx @activade/open-workflows
 ```

@@ -1,9 +1,20 @@
-import { ENV_OPENCODE_AUTH, ENV_API_KEY, ENV_NPM_TOKEN } from './shared';
-
-export const RELEASE = (useOAuth: boolean) => `name: Release
+export const RELEASE = (_useOAuth: boolean) => `name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      version:
+        description: 'Override version (optional, e.g., 1.2.3)'
+        required: false
+        type: string
 
 jobs:
   release:
@@ -17,6 +28,9 @@ jobs:
           fetch-depth: 0
 
       - uses: activadee/open-workflows/actions/release@main
+        with:
+          bump: \${{ inputs.bump }}
+          version: \${{ inputs.version }}
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}${useOAuth ? ENV_OPENCODE_AUTH : ENV_API_KEY}${ENV_NPM_TOKEN}
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 `;

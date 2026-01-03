@@ -1,49 +1,59 @@
 name: 'Release'
-description: 'Automated releases with semantic versioning and release notes'
+description: 'Automated releases with semantic versioning, changelog, and npm provenance'
 author: 'activadee'
 
 inputs:
-  model:
-    description: 'Model to use for release notes'
+  bump:
+    description: 'Version bump type: major, minor, or patch'
     required: false
-    default: 'anthropic/claude-sonnet-4-5'
+  version:
+    description: 'Override version (e.g., 1.2.3). Takes precedence over bump.'
+    required: false
+  skip-build:
+    description: 'Skip build step (if already built)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
   steps:
+    - name: Validate inputs
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.bump }}" ] && [ -z "${{ inputs.version }}" ]; then
+          echo "Error: Either 'bump' or 'version' input is required"
+          exit 1
+        fi
+
     - name: Setup Bun
       uses: oven-sh/setup-bun@v2
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
-        registry-url: 'https://registry.npmjs.org'
+        node-version: '*'
 
-    - name: Setup OpenCode auth
-      if: env.OPENCODE_AUTH != ''
+    - name: Upgrade npm for provenance support
+      shell: bash
+      run: npm install -g npm@latest
+
+    - name: Install dependencies
+      shell: bash
+      run: bun install --frozen-lockfile
+
+    - name: Run publish script
       shell: bash
       run: |
-        mkdir -p ~/.local/share/opencode
-        echo "$OPENCODE_AUTH" | base64 -d > ~/.local/share/opencode/auth.json
-
-    - name: Configure Git
-      shell: bash
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-
-    - name: Install skill
-      shell: bash
-      run: |
-        mkdir -p .opencode/skill/release-notes
-        cp "${{ github.action_path }}/skill.md" .opencode/skill/release-notes/SKILL.md
-
-    - name: Create Release
-      shell: bash
-      run: |
-        bunx opencode-ai@latest run --model "${{ inputs.model }}" \
-          "Load the release-notes skill. Scripts are at ${{ github.action_path }}/src/. Create a release."
+        ARGS="--repo ${{ github.repository }}"
+        if [ -n "${{ inputs.version }}" ]; then
+          ARGS="$ARGS --version ${{ inputs.version }}"
+        elif [ -n "${{ inputs.bump }}" ]; then
+          ARGS="$ARGS --bump ${{ inputs.bump }}"
+        fi
+        if [ "${{ inputs.skip-build }}" = "true" ]; then
+          ARGS="$ARGS --skip-build"
+        fi
+        bun "${{ github.action_path }}/src/publish.ts" $ARGS
       env:
+        CI: true
         GITHUB_TOKEN: ${{ github.token }}
-        NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}

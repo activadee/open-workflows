@@ -2,6 +2,19 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      version:
+        description: 'Override version (optional, e.g., 1.2.3)'
+        required: false
+        type: string
 
 jobs:
   release:
@@ -14,8 +27,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ./actions/release
+      - uses: activadee/open-workflows/actions/release@main
+        with:
+          bump: ${{ inputs.bump }}
+          version: ${{ inputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENCODE_AUTH: ${{ secrets.OPENCODE_AUTH }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
