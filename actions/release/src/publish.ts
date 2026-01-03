@@ -43,7 +43,7 @@ async function generateChangelog(previousVersion: string): Promise<string[]> {
   const notes: string[] = []
 
   try {
-    const tagExists = await Bun.$`git rev-parse v${previousVersion}`.nothrow()
+    const tagExists = await Bun.$`git rev-parse v${previousVersion} 2>/dev/null`.nothrow()
     if (tagExists.exitCode !== 0) {
       console.log("No previous tag found, skipping changelog")
       return notes
@@ -72,10 +72,10 @@ async function getContributors(previousVersion: string, repo: string): Promise<s
   const excludeUsers = ["github-actions[bot]", "actions-user", "dependabot[bot]"]
 
   try {
-    const tagExists = await Bun.$`git rev-parse v${previousVersion}`.nothrow()
+    const tagExists = await Bun.$`git rev-parse v${previousVersion} 2>/dev/null`.nothrow()
     if (tagExists.exitCode !== 0) return notes
 
-    const compare = await Bun.$`gh api "/repos/${repo}/compare/v${previousVersion}...HEAD" --jq '.commits[] | {login: .author.login, message: .commit.message}'`.text()
+    const compare = await Bun.$`gh api "/repos/${repo}/compare/v${previousVersion}...HEAD" --jq '.commits[] | {login: .author.login, message: .commit.message}' 2>/dev/null`.text()
     const contributors = new Map<string, string[]>()
 
     for (const line of compare.split("\n").filter(Boolean)) {
@@ -149,7 +149,7 @@ async function gitTagAndRelease(newVersion: string, notes: string[], repo: strin
     console.log("No changes to commit (version already updated)")
   }
 
-  const tagExists = await Bun.$`git rev-parse v${newVersion}`.nothrow()
+  const tagExists = await Bun.$`git rev-parse v${newVersion} 2>/dev/null`.nothrow()
   if (tagExists.exitCode !== 0) {
     await Bun.$`git tag v${newVersion}`
   } else {
@@ -160,7 +160,7 @@ async function gitTagAndRelease(newVersion: string, notes: string[], repo: strin
 
   console.log("\nCreating GitHub release...")
   const releaseNotes = notes.length > 0 ? notes.join("\n") : "No notable changes"
-  const releaseExists = await Bun.$`gh release view v${newVersion}`.nothrow()
+  const releaseExists = await Bun.$`gh release view v${newVersion} 2>/dev/null`.nothrow()
   if (releaseExists.exitCode !== 0) {
     await Bun.$`gh release create v${newVersion} --title "v${newVersion}" --notes ${releaseNotes}`
   } else {
