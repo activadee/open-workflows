@@ -18,10 +18,68 @@ const WORKFLOW_GENERATORS: Record<string, (useOAuth: boolean) => string> = {
   release: RELEASE,
 };
 
+export interface ExistingFile {
+  type: 'workflow' | 'skill' | 'auth';
+  name: string;
+  path: string;
+}
+
+export function checkExistingWorkflows(options: { workflows: WorkflowType[]; cwd?: string }): ExistingFile[] {
+  const { workflows, cwd = process.cwd() } = options;
+  const workflowDir = path.join(cwd, '.github', 'workflows');
+  const existing: ExistingFile[] = [];
+
+  for (const wf of workflows) {
+    const fileName = WORKFLOW_FILE_MAP[wf];
+    const filePath = path.join(workflowDir, `${fileName}.yml`);
+    if (fs.existsSync(filePath)) {
+      existing.push({
+        type: 'workflow',
+        name: wf,
+        path: `.github/workflows/${fileName}.yml`,
+      });
+    }
+  }
+
+  return existing;
+}
+
+export function checkExistingSkills(options: { cwd?: string }): ExistingFile[] {
+  const { cwd = process.cwd() } = options;
+  const targetDir = path.join(cwd, '.opencode', 'skill');
+  const existing: ExistingFile[] = [];
+
+  for (const name of SKILL_NAMES) {
+    const destPath = path.join(targetDir, name, 'SKILL.md');
+    if (fs.existsSync(destPath)) {
+      existing.push({
+        type: 'skill',
+        name,
+        path: `.opencode/skill/${name}/SKILL.md`,
+      });
+    }
+  }
+
+  return existing;
+}
+
+export function checkExistingAuthWorkflow(options: { cwd?: string }): ExistingFile | null {
+  const { cwd = process.cwd() } = options;
+  const filePath = path.join(cwd, '.github', 'workflows', 'opencode-auth.yml');
+  if (fs.existsSync(filePath)) {
+    return {
+      type: 'auth',
+      name: 'opencode-auth',
+      path: '.github/workflows/opencode-auth.yml',
+    };
+  }
+  return null;
+}
+
 export interface InstallResult {
   type: 'workflow' | 'skill' | 'config' | 'auth';
   name: string;
-  status: 'created' | 'skipped' | 'error';
+  status: 'created' | 'skipped' | 'overwritten' | 'error';
   path: string;
   message: string;
 }
@@ -30,10 +88,12 @@ export interface InstallOptions {
   workflows: WorkflowType[];
   cwd?: string;
   useOAuth?: boolean;
+  override?: boolean;
+  overrideNames?: Set<string>;
 }
 
 export function installWorkflows(options: InstallOptions): InstallResult[] {
-  const { workflows, cwd = process.cwd(), useOAuth = false } = options;
+  const { workflows, cwd = process.cwd(), useOAuth = false, override = false, overrideNames } = options;
   const results: InstallResult[] = [];
   const workflowDir = path.join(cwd, '.github', 'workflows');
 
@@ -70,7 +130,10 @@ export function installWorkflows(options: InstallOptions): InstallResult[] {
       continue;
     }
 
-    if (fs.existsSync(filePath)) {
+    const fileExists = fs.existsSync(filePath);
+    const shouldOverride = override || overrideNames?.has(wf);
+    
+    if (fileExists && !shouldOverride) {
       results.push({
         type: 'workflow',
         name: wf,
@@ -86,9 +149,9 @@ export function installWorkflows(options: InstallOptions): InstallResult[] {
       results.push({
         type: 'workflow',
         name: wf,
-        status: 'created',
+        status: fileExists ? 'overwritten' : 'created',
         path: `.github/workflows/${fileName}.yml`,
-        message: `Created successfully`,
+        message: fileExists ? 'Overwritten successfully' : 'Created successfully',
       });
     } catch (error) {
       results.push({
@@ -104,8 +167,8 @@ export function installWorkflows(options: InstallOptions): InstallResult[] {
   return results;
 }
 
-export function installAuthWorkflow(options: { cwd?: string }): InstallResult {
-  const { cwd = process.cwd() } = options;
+export function installAuthWorkflow(options: { cwd?: string; override?: boolean }): InstallResult {
+  const { cwd = process.cwd(), override = false } = options;
   const workflowDir = path.join(cwd, '.github', 'workflows');
   const filePath = path.join(workflowDir, 'opencode-auth.yml');
 
@@ -113,7 +176,8 @@ export function installAuthWorkflow(options: { cwd?: string }): InstallResult {
     fs.mkdirSync(workflowDir, { recursive: true });
   }
 
-  if (fs.existsSync(filePath)) {
+  const fileExists = fs.existsSync(filePath);
+  if (fileExists && !override) {
     return {
       type: 'auth',
       name: 'opencode-auth',
@@ -128,9 +192,9 @@ export function installAuthWorkflow(options: { cwd?: string }): InstallResult {
     return {
       type: 'auth',
       name: 'opencode-auth',
-      status: 'created',
+      status: fileExists ? 'overwritten' : 'created',
       path: '.github/workflows/opencode-auth.yml',
-      message: 'Created successfully',
+      message: fileExists ? 'Overwritten successfully' : 'Created successfully',
     };
   } catch (error) {
     return {
@@ -143,8 +207,8 @@ export function installAuthWorkflow(options: { cwd?: string }): InstallResult {
   }
 }
 
-export function installSkills(options: { cwd?: string }): InstallResult[] {
-  const { cwd = process.cwd() } = options;
+export function installSkills(options: { cwd?: string; override?: boolean; overrideNames?: Set<string> }): InstallResult[] {
+  const { cwd = process.cwd(), override = false, overrideNames } = options;
   const results: InstallResult[] = [];
   const targetDir = path.join(cwd, '.opencode', 'skill');
 
@@ -152,7 +216,10 @@ export function installSkills(options: { cwd?: string }): InstallResult[] {
     const skill = SKILLS[name];
     const destPath = path.join(targetDir, name, 'SKILL.md');
 
-    if (fs.existsSync(destPath)) {
+    const fileExists = fs.existsSync(destPath);
+    const shouldOverride = override || overrideNames?.has(name);
+    
+    if (fileExists && !shouldOverride) {
       results.push({
         type: 'skill',
         name,
@@ -169,9 +236,9 @@ export function installSkills(options: { cwd?: string }): InstallResult[] {
       results.push({
         type: 'skill',
         name,
-        status: 'created',
+        status: fileExists ? 'overwritten' : 'created',
         path: `.opencode/skill/${name}/SKILL.md`,
-        message: `Created successfully`,
+        message: fileExists ? 'Overwritten successfully' : 'Created successfully',
       });
     } catch (error) {
       results.push({
