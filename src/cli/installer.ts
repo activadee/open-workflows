@@ -198,6 +198,7 @@ export function createOpencodeConfig(cwd: string = process.cwd()): { created: bo
     small_model: 'anthropic/claude-haiku-4-5',
     plugin: [pluginEntry],
     permission: {
+      "external_directory": "allow",
       skill: {
         'pr-review': 'allow',
         'issue-label': 'allow',
