@@ -176,9 +176,15 @@ if (errors.length > 0) {
 
 if (useOAuth) {
   if (installPlugin) {
+    p.log.info('Launching opencode-auth-sync setup...');
+    const proc = Bun.spawn(['bunx', '@activade/opencode-auth-sync'], {
+      stdio: ['inherit', 'inherit', 'inherit'],
+    });
+    await proc.exited;
+
     p.note(
-      `${color.cyan('1.')} Setup the auth sync plugin:\n   ${color.dim('bunx @activade/opencode-auth-sync')}\n\n${color.cyan('2.')} Commit and push the workflow files`,
-      'Next steps (OAuth with plugin)'
+      `Commit and push the workflow files`,
+      'Next steps'
     );
   } else {
     p.note(
