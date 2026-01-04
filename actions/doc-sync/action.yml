@@ -27,11 +27,13 @@ runs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
-    - name: Install skill
+    - name: Install skill and tools
       shell: bash
       run: |
         mkdir -p .opencode/skill/doc-sync
         cp "${{ github.action_path }}/skill.md" .opencode/skill/doc-sync/SKILL.md
+        mkdir -p ~/.config/opencode/tool
+        cp "${{ github.action_path }}/../../.opencode/tool/"*.ts ~/.config/opencode/tool/ 2>/dev/null || true
 
     - name: Sync Documentation
       shell: bash

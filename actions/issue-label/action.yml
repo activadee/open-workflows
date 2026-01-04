@@ -21,16 +21,18 @@ runs:
         mkdir -p ~/.local/share/opencode
         echo "$OPENCODE_AUTH" > ~/.local/share/opencode/auth.json
 
-    - name: Install skill
+    - name: Install skill and tools
       shell: bash
       run: |
         mkdir -p .opencode/skill/issue-label
         cp "${{ github.action_path }}/skill.md" .opencode/skill/issue-label/SKILL.md
+        mkdir -p ~/.config/opencode/tool
+        cp "${{ github.action_path }}/../../.opencode/tool/"*.ts ~/.config/opencode/tool/
 
     - name: Label Issue
       shell: bash
       run: |
         bunx opencode-ai@latest run --model "${{ inputs.model }}" \
-          "Load the issue-label skill. Scripts are at ${{ github.action_path }}/src/. Label issue ${{ github.event.issue.number }}"
+          "Load the issue-label skill. Label issue ${{ github.event.issue.number }}"
       env:
         GITHUB_TOKEN: ${{ github.token }}

@@ -21,16 +21,18 @@ runs:
         mkdir -p ~/.local/share/opencode
         echo "$OPENCODE_AUTH" > ~/.local/share/opencode/auth.json
 
-    - name: Install skill
+    - name: Install skill and tools
       shell: bash
       run: |
         mkdir -p .opencode/skill/pr-review
         cp "${{ github.action_path }}/skill.md" .opencode/skill/pr-review/SKILL.md
+        mkdir -p ~/.config/opencode/tool
+        cp "${{ github.action_path }}/../../.opencode/tool/"*.ts ~/.config/opencode/tool/
 
     - name: Review PR
       shell: bash
       run: |
         bunx opencode-ai@latest run --model "${{ inputs.model }}" \
-          "Load the pr-review skill. Scripts are at ${{ github.action_path }}/src/. Review PR ${{ github.event.pull_request.number }}"
+          "Load the pr-review skill. Review PR ${{ github.event.pull_request.number }}"
       env:
         GITHUB_TOKEN: ${{ github.token }}
