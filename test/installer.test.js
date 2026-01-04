@@ -76,6 +76,39 @@ describe('installer workflow functionality', () => {
       expect(content).not.toContain('ANTHROPIC_API_KEY');
     });
 
+    it('does NOT include cache restore step for OAuth', () => {
+      installWorkflows({
+        workflows: ['review'],
+        cwd: tempDir,
+        useOAuth: true,
+      });
+
+      const content = fs.readFileSync(
+        path.join(tempDir, '.github', 'workflows', 'pr-review.yml'),
+        'utf-8'
+      );
+      expect(content).not.toContain('actions/cache/restore');
+      expect(content).not.toContain('opencode-auth-');
+    });
+
+    it('creates all AI workflow types without cache steps', () => {
+      installWorkflows({
+        workflows: ['review', 'label', 'doc-sync'],
+        cwd: tempDir,
+        useOAuth: true,
+      });
+
+      const files = ['pr-review.yml', 'issue-label.yml', 'doc-sync.yml'];
+      for (const file of files) {
+        const content = fs.readFileSync(
+          path.join(tempDir, '.github', 'workflows', file),
+          'utf-8'
+        );
+        expect(content).toContain('OPENCODE_AUTH');
+        expect(content).not.toContain('actions/cache/restore');
+      }
+    });
+
     it('skips existing files without override', () => {
       const workflowDir = path.join(tempDir, '.github', 'workflows');
       fs.mkdirSync(workflowDir, { recursive: true });
