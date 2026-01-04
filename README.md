@@ -82,6 +82,14 @@ gh secret set ANTHROPIC_API_KEY
 ```
 
 **Option 2: Claude Max (OAuth)**
+
+Use the [opencode-auth-sync](https://github.com/activadee/opencode-auth-sync) plugin to automatically sync your OAuth tokens:
+
+```bash
+bunx @activade/opencode-auth-sync
+```
+
+Or manually set the secret:
 ```bash
 gh secret set OPENCODE_AUTH < ~/.local/share/opencode/auth.json
 ```

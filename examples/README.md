@@ -10,7 +10,13 @@ For AI-powered actions (pr-review, issue-label, doc-sync), add your API key:
 gh secret set ANTHROPIC_API_KEY
 ```
 
-Or if using Claude Max subscription:
+Or if using Claude Max subscription, use the [opencode-auth-sync](https://github.com/activadee/opencode-auth-sync) plugin to automatically sync your OAuth tokens:
+
+```bash
+bunx @activade/opencode-auth-sync
+```
+
+Or manually set the secret:
 
 ```bash
 gh secret set OPENCODE_AUTH < ~/.local/share/opencode/auth.json

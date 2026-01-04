@@ -42,11 +42,10 @@ WHAT GETS INSTALLED
   .github/workflows/issue-label.yml
   .github/workflows/doc-sync.yml
   .github/workflows/release.yml
-  .github/workflows/opencode-auth.yml (OAuth only)
 
 REQUIRED SECRETS
   For Claude Max (OAuth):
-    OPENCODE_AUTH - Your auth.json from ~/.local/share/opencode/auth.json
+    OPENCODE_AUTH - Your auth.json (use opencode-auth-sync plugin to keep it updated)
 
   For API Key:
     ANTHROPIC_API_KEY - Your Anthropic API key
@@ -85,11 +84,22 @@ const promptResults = await p.group(
   }
 );
 
-let selectedWorkflows = (promptResults.workflows || []) as WorkflowType[];
+const selectedWorkflows = (promptResults.workflows || []) as WorkflowType[];
 const useOAuth = Boolean(promptResults.useOAuth);
 
-if (useOAuth && !selectedWorkflows.includes('opencode-auth')) {
-  selectedWorkflows = [...selectedWorkflows, 'opencode-auth'];
+let installPlugin = false;
+if (useOAuth) {
+  const pluginPrompt = await p.confirm({
+    message: 'Install opencode-auth-sync plugin? (keeps OAuth tokens synced)',
+    initialValue: true,
+  });
+
+  if (p.isCancel(pluginPrompt)) {
+    p.cancel('Installation cancelled.');
+    process.exit(0);
+  }
+
+  installPlugin = Boolean(pluginPrompt);
 }
 
 const workflowOverrides = new Set<string>();
@@ -165,10 +175,23 @@ if (errors.length > 0) {
 }
 
 if (useOAuth) {
-  p.note(
-    `${color.cyan('1.')} Export your OpenCode auth as a secret:\n   ${color.dim('gh secret set OPENCODE_AUTH < ~/.local/share/opencode/auth.json')}\n\n${color.cyan('2.')} Commit and push the workflow files\n\n${color.cyan('3.')} Run the opencode-auth workflow manually to initialize the cache:\n   ${color.dim('gh workflow run opencode-auth.yml')}`,
-    'Next steps (OAuth)'
-  );
+  if (installPlugin) {
+    p.log.info('Launching opencode-auth-sync setup...');
+    const proc = Bun.spawn(['bunx', '@activade/opencode-auth-sync'], {
+      stdio: ['inherit', 'inherit', 'inherit'],
+    });
+    await proc.exited;
+
+    p.note(
+      `Commit and push the workflow files`,
+      'Next steps'
+    );
+  } else {
+    p.note(
+      `${color.cyan('1.')} Export your OpenCode auth as a secret:\n   ${color.dim('gh secret set OPENCODE_AUTH < ~/.local/share/opencode/auth.json')}\n\n${color.cyan('2.')} Commit and push the workflow files`,
+      'Next steps (OAuth)'
+    );
+  }
 } else {
   p.note(
     `${color.cyan('1.')} Add your Anthropic API key:\n   ${color.dim('gh secret set ANTHROPIC_API_KEY')}\n\n${color.cyan('2.')} Commit and push the workflow files`,

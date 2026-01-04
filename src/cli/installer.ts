@@ -5,7 +5,6 @@ import {
   ISSUE_LABEL,
   DOC_SYNC,
   RELEASE,
-  OPENCODE_AUTH,
   WORKFLOW_FILE_MAP,
   type WorkflowType,
 } from './templates';
@@ -15,7 +14,6 @@ const WORKFLOW_GENERATORS: Record<string, (useOAuth: boolean) => string> = {
   'issue-label': ISSUE_LABEL,
   'doc-sync': DOC_SYNC,
   release: RELEASE,
-  'opencode-auth': OPENCODE_AUTH,
 };
 
 export interface ExistingFile {
