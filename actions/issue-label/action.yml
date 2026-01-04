@@ -20,7 +20,10 @@ runs:
       run: |
         mkdir -p ~/.local/share/opencode
         echo "$OPENCODE_AUTH" > ~/.local/share/opencode/auth.json
-
+    - name: Install opencode-ai
+      shell: bash
+      run: |
+        curl -fsSL https://opencode.ai/install | bash
     - name: Install skill and tools
       shell: bash
       run: |
@@ -32,7 +35,7 @@ runs:
     - name: Label Issue
       shell: bash
       run: |
-        bunx opencode-ai@latest run --model "${{ inputs.model }}" \
+        opencode run --model "${{ inputs.model }}" \
           "Load the issue-label skill. Label issue ${{ github.event.issue.number }}"
       env:
         GITHUB_TOKEN: ${{ github.token }}

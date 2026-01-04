@@ -20,7 +20,10 @@ runs:
       run: |
         mkdir -p ~/.local/share/opencode
         echo "$OPENCODE_AUTH" > ~/.local/share/opencode/auth.json
-
+    - name: Install opencode-ai
+      shell: bash
+      run: |
+        curl -fsSL https://opencode.ai/install | bash
     - name: Install skill and tools
       shell: bash
       run: |
@@ -32,7 +35,7 @@ runs:
     - name: Review PR
       shell: bash
       run: |
-        bunx opencode-ai@latest run --model "${{ inputs.model }}" \
+        opencode run --model "${{ inputs.model }}" \
           "Load the pr-review skill. Review PR ${{ github.event.pull_request.number }}"
       env:
         GITHUB_TOKEN: ${{ github.token }}
