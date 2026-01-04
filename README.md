@@ -115,6 +115,7 @@ OPTIONS
 
 Fork this repository and modify:
 - `actions/*/skill.md` - AI behavior for AI-powered actions
+- `scripts/*.ts` - OpenCode custom tools (submit-review, apply-labels)
 - `actions/release/src/publish.ts` - Release logic
 
 ## License

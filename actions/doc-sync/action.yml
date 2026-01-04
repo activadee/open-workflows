@@ -36,7 +36,8 @@ runs:
         mkdir -p .opencode/skill/doc-sync
         cp "${{ github.action_path }}/skill.md" .opencode/skill/doc-sync/SKILL.md
         mkdir -p ~/.config/opencode/tool
-        cp "${{ github.action_path }}/../../.opencode/tool/"*.ts ~/.config/opencode/tool/ 2>/dev/null || true
+        cp "${{ github.action_path }}/../../scripts/"*.ts ~/.config/opencode/tool/ 2>/dev/null || true
+        cd ~/.config/opencode && bun add @opencode-ai/plugin
     - name: Sync Documentation
       shell: bash
       run: |

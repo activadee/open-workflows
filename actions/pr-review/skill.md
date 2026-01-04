@@ -125,28 +125,18 @@ Before starting your review:
 
 ## Posting Review
 
-The script path is provided in your task message. Run the submit-review script:
+Use the `submit-review` tool to post your review. The tool is automatically available.
 
-```bash
-bun "<script_path>/submit-review.ts" \
-  --repo "owner/repo" \
-  --pr 123 \
-  --commit "abc1234" \
-  --verdict "approve" \
-  --summary "Your overall assessment" \
-  --issues '[{"file":"src/foo.ts","line":42,"severity":"high","title":"Issue title","explanation":"Why this matters","suggestion":"Optional fix"}]'
-```
-
-### Arguments
+### Tool Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `--repo` | Yes | Repository in owner/repo format |
-| `--pr` | Yes | Pull request number |
-| `--commit` | No | Commit SHA (first 7 chars shown in review) |
-| `--verdict` | Yes | `approve` or `request_changes` |
-| `--summary` | Yes | 1-3 sentence overall assessment |
-| `--issues` | No | JSON array of issues found |
+| `repository` | Yes | Repository in owner/repo format |
+| `pullNumber` | Yes | Pull request number |
+| `commitSha` | Yes | Commit SHA (first 7 chars shown in review) |
+| `verdict` | Yes | `approve` or `request_changes` |
+| `summary` | Yes | 1-3 sentence overall assessment |
+| `issues` | Yes | Array of issues found (can be empty for approvals) |
 
 ### Issue Format
 
@@ -186,7 +176,7 @@ Each issue in the array:
 
 ## Common Mistakes to Avoid
 
-- Do NOT run the script more than once per review
+- Do NOT call the submit-review tool more than once per review
 - Do NOT use line numbers from the left (old) side of the diff
 - Do NOT skip the per-file todo workflow
 - Do NOT guess repository, PR number, or commit SHA - derive from git/gh commands

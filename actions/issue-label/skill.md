@@ -52,37 +52,28 @@ Prefer existing labels over creating new ones. Check the repository's label taxo
 
 ## Applying Labels
 
-The script path is provided in your task message. Run the apply-labels script:
+Use the `apply-labels` tool to apply labels. The tool is automatically available.
 
-```bash
-bun "<script_path>/apply-labels.ts" \
-  --repo "owner/repo" \
-  --issue 123 \
-  --labels "bug,needs-triage" \
-  --explanation "Issue describes broken functionality in auth module"
-```
-
-### Arguments
+### Tool Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `--repo` | Yes | Repository in owner/repo format |
-| `--issue` | Yes | Issue number |
-| `--labels` | Yes | Comma-separated label names (max 3) |
-| `--explanation` | Yes | Brief reason for label choices |
-| `--new-labels` | No | JSON array of new labels to create first |
+| `repository` | Yes | Repository in owner/repo format |
+| `issueNumber` | Yes | Issue number |
+| `labels` | Yes | Array of existing label names (max 3 total) |
+| `explanation` | Yes | Brief reason for label choices |
+| `newLabels` | No | Array of new labels to create first |
 
 ### Creating New Labels
 
-If you need to create new labels (use sparingly):
+If you need to create new labels (use sparingly), provide `newLabels`:
 
-```bash
-bun "<script_path>/apply-labels.ts" \
-  --repo "owner/repo" \
-  --issue 123 \
-  --labels "bug,needs-reproduction" \
-  --explanation "Bug report lacking steps to reproduce" \
-  --new-labels '[{"name":"needs-reproduction","color":"d93f0b","description":"Issue needs steps to reproduce"}]'
+```json
+{
+  "newLabels": [
+    {"name": "needs-reproduction", "color": "d93f0b", "description": "Issue needs steps to reproduce"}
+  ]
+}
 ```
 
 Color is a hex string WITHOUT the leading `#`.
@@ -104,7 +95,7 @@ Color is a hex string WITHOUT the leading `#`.
 - Do NOT overuse broad labels like `question` when specific ones exist
 - Do NOT create duplicate labels with slight name variations
 - Do NOT omit the explanation argument
-- Do NOT run the script more than once
+- Do NOT call the apply-labels tool more than once
 
 ## Example Explanation
 

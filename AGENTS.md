@@ -14,18 +14,19 @@ open-workflows/
 ├── actions/                    # Composite GitHub Actions
 │   ├── pr-review/             # AI-powered
 │   │   ├── action.yml
-│   │   ├── skill.md
-│   │   └── src/submit-review.ts
+│   │   └── skill.md
 │   ├── issue-label/           # AI-powered
 │   │   ├── action.yml
-│   │   ├── skill.md
-│   │   └── src/apply-labels.ts
+│   │   └── skill.md
 │   ├── doc-sync/              # AI-powered
 │   │   ├── action.yml
 │   │   └── skill.md
 │   └── release/               # No AI - pure script
 │       ├── action.yml
 │       └── src/publish.ts
+├── scripts/                    # OpenCode custom tools (copied to ~/.config/opencode/tool/)
+│   ├── submit-review.ts       # PR review tool
+│   └── apply-labels.ts        # Issue labeling tool
 ├── src/
 │   └── cli/                   # Workflow installer CLI
 │       ├── index.ts
@@ -50,22 +51,29 @@ open-workflows/
 |------|----------|
 | AI action behavior | `actions/{name}/skill.md` |
 | Action setup | `actions/{name}/action.yml` |
-| Helper scripts | `actions/{name}/src/*.ts` |
+| OpenCode tools | `scripts/*.ts` |
 | Release logic | `actions/release/src/publish.ts` |
 | CLI | `src/cli/` |
 | Workflow templates | `src/cli/templates/` |
 
-## HELPER SCRIPTS
+## OPENCODE TOOLS
+
+Tools in `scripts/` are copied to `~/.config/opencode/tool/` at runtime.
 
 | Script | Purpose |
 |--------|---------|
 | `submit-review.ts` | Post/update sticky PR comment |
 | `apply-labels.ts` | Create + apply labels |
+
+## RELEASE SCRIPT
+
+| Script | Purpose |
+|--------|---------|
 | `publish.ts` | Version bump, changelog, npm publish, GitHub release |
 
 ## CONVENTIONS
 
-- **AI actions**: `action.yml` + `skill.md` + optional `src/*.ts`
+- **AI actions**: `action.yml` + `skill.md` (tools in `scripts/`)
 - **Non-AI actions**: `action.yml` + `src/*.ts` (no skill.md)
 - **Scripts**: Bun TypeScript, uses `Bun.$` for shell
 - **Build**: Bun for CLI bundling

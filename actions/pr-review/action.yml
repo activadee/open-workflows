@@ -30,7 +30,8 @@ runs:
         mkdir -p .opencode/skill/pr-review
         cp "${{ github.action_path }}/skill.md" .opencode/skill/pr-review/SKILL.md
         mkdir -p ~/.config/opencode/tool
-        cp "${{ github.action_path }}/../../.opencode/tool/"*.ts ~/.config/opencode/tool/
+        cp "${{ github.action_path }}/../../scripts/"*.ts ~/.config/opencode/tool/
+        cd ~/.config/opencode && bun add @opencode-ai/plugin
 
     - name: Review PR
       shell: bash
