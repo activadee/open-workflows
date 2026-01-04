@@ -1,6 +1,6 @@
 {
   "name": "@activade/open-workflows",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "AI-powered GitHub automation workflows via composite actions",
   "keywords": [
     "github",
