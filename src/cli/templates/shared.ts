@@ -8,5 +8,6 @@ export const CACHE_RESTORE_STEP = `
       - uses: actions/cache/restore@v4
         with:
           path: ~/.local/share/opencode/auth.json
-          key: opencode-auth
+          key: opencode-auth-
+          restore-keys: opencode-auth-
 `;
