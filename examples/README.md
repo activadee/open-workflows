@@ -13,7 +13,7 @@ gh secret set ANTHROPIC_API_KEY
 Or if using Claude Max subscription:
 
 ```bash
-cat ~/.local/share/opencode/auth.json | base64 | gh secret set OPENCODE_AUTH
+gh secret set OPENCODE_AUTH < ~/.local/share/opencode/auth.json
 ```
 
 ## PR Review
