@@ -19,7 +19,7 @@ runs:
       shell: bash
       run: |
         mkdir -p ~/.local/share/opencode
-        echo "$OPENCODE_AUTH" | base64 -d > ~/.local/share/opencode/auth.json
+        echo "$OPENCODE_AUTH" > ~/.local/share/opencode/auth.json
 
     - name: Configure Git
       shell: bash
